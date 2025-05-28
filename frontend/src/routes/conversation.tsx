@@ -157,7 +157,6 @@ function AppContent() {
                 to: "terminal",
                 icon: <TerminalIcon />,
               },
-              { label: "Jupyter", to: "jupyter", icon: <JupyterIcon /> },
               {
                 label: <ServedAppLabel />,
                 to: "served",

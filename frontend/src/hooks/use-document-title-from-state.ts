@@ -7,7 +7,7 @@ import { useActiveConversation } from "./query/use-active-conversation";
  *
  * @param suffix Optional suffix to append to the title (default: "OpenHands")
  */
-export function useDocumentTitleFromState(suffix = "OpenHands") {
+export function useDocumentTitleFromState(suffix = "Wize Agents") {
   const { data: conversation } = useActiveConversation();
   const lastValidTitleRef = useRef<string | null>(null);
 
