@@ -40,7 +40,7 @@ export function HomeHeader() {
         <p className="text-sm max-w-[424px]">
           {t("HOME$OPENHANDS_DESCRIPTION")}
         </p>
-        <p className="text-sm">
+        {/* <p className="text-sm">
           {t("HOME$NOT_SURE_HOW_TO_START")}{" "}
           <a
             href="https://docs.all-hands.dev/modules/usage/getting-started"
@@ -50,7 +50,7 @@ export function HomeHeader() {
           >
             Read this
           </a>
-        </p>
+        </p> */}
       </div>
     </header>
   );
