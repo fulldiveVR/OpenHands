@@ -31,7 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export const meta: MetaFunction = () => [
-  { title: "Wize Agents" },
+  { title: "Wize Teams" },
   { name: "description", content: "Let's Start Building!" },
 ];
 
