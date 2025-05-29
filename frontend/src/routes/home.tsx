@@ -11,6 +11,8 @@ import { useIsCreatingConversation } from "#/hooks/use-is-creating-conversation"
 import { ConversationPanel } from "#/components/features/conversation-panel/conversation-panel";
 import { useUserConversations } from "#/hooks/query/use-user-conversations";
 import { ProjectStatus } from "#/components/features/conversation-panel/conversation-state-indicator";
+import { useUserRepositories } from "#/hooks/query/use-user-repositories";
+import { GitRepository } from "#/types/git";
 
 <PrefetchPageLinks page="/conversations/:conversationId" />;
 
@@ -20,6 +22,7 @@ function HomeScreen() {
   const [selectedRepoTitle, setSelectedRepoTitle] = React.useState<
     string | null
   >(null);
+  const [selectedRepository, setSelectedRepository] = React.useState<GitRepository | null>(null);
   // Removed tabs state as we're only showing tasks
 
   const {
@@ -29,6 +32,7 @@ function HomeScreen() {
   } = useCreateConversation();
   const isCreatingConversationElsewhere = useIsCreatingConversation();
   const { data: conversations, isFetching, error } = useUserConversations();
+  const { data: repositories, isLoading: isLoadingRepositories } = useUserRepositories();
 
   // We check for isSuccess because the app might require time to render
   // into the new conversation screen after the conversation is created.
@@ -44,11 +48,28 @@ function HomeScreen() {
     const date = new Date(dateString);
     return `${date.toLocaleString('default', { month: 'short' })} ${date.getDate()}`;
   };
+  
+  const handleRepoSelection = (repoId: string | null) => {
+    if (!repoId || !repositories) {
+      setSelectedRepository(null);
+      setSelectedRepoTitle(null);
+      return;
+    }
+    
+    const repo = repositories.find(r => r.id.toString() === repoId);
+    if (repo) {
+      setSelectedRepository(repo);
+      setSelectedRepoTitle(repo.full_name);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim() && !isCreatingConversation) {
-      createConversation({ q: inputValue });
+      createConversation({ 
+        q: inputValue,
+        selectedRepository: selectedRepository
+      });
       setInputValue("");
     }
   };
@@ -73,13 +94,23 @@ function HomeScreen() {
               placeholder="Describe a task"
               className="w-full h-32 p-4 bg-base-primary border border-neutral-700 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
             />
-            <div className="absolute bottom-4 right-4 flex gap-2">
-              <button
-                type="button"
-                className="px-3 py-1 text-sm border border-neutral-700 rounded-md hover:bg-neutral-800"
+            <div className="absolute bottom-4 left-4 flex items-center gap-2">
+              <span className="text-sm text-neutral-400">{t("Repository")}:</span>
+              <select
+                value={selectedRepository?.id.toString() || ""}
+                onChange={(e) => handleRepoSelection(e.target.value || null)}
+                className="px-2 py-1 text-sm bg-base-primary border border-neutral-700 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                disabled={!providersAreSet || isLoadingRepositories}
               >
-                {t("main")}
-              </button>
+                <option value="">{t("None")}</option>
+                {repositories?.map((repo) => (
+                  <option key={repo.id} value={repo.id.toString()}>
+                    {repo.full_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="absolute bottom-4 right-4 flex gap-2">
               <button
                 type="submit"
                 disabled={isCreatingConversation || !inputValue.trim()}
