@@ -187,12 +187,12 @@ function AppContent() {
     <WsClientProvider conversationId={conversationId}>
       <EventHandler>
         <div data-testid="app-route" className="flex flex-col h-full gap-3">
-          <div className="flex h-full overflow-auto">{renderMain()}</div>
-
-          <Controls
+        <Controls
             setSecurityOpen={onSecurityModalOpen}
             showSecurityLock={!!settings?.SECURITY_ANALYZER}
           />
+          <div className="flex h-full overflow-auto">{renderMain()}</div>
+
           {settings && (
             <Security
               isOpen={securityModalIsOpen}
