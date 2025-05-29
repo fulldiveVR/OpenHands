@@ -62,14 +62,12 @@ prepareApp().then(() =>
   startTransition(() => {
     hydrateRoot(
       document,
-      <StrictMode>
-        <Provider store={store}>
-          <QueryClientProvider client={queryClient}>
-            <HydratedRouter />
-            <PosthogInit />
-          </QueryClientProvider>
-        </Provider>
-      </StrictMode>,
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <HydratedRouter />
+          <PosthogInit />
+        </QueryClientProvider>
+      </Provider>,
     );
   }),
 );
