@@ -13,17 +13,20 @@ import logging
 import mimetypes
 import os
 import shutil
+import socket
 import sys
 import tempfile
 import time
 import traceback
-from contextlib import asynccontextmanager
+import zipfile
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 from zipfile import ZipFile
 
 from binaryornot.check import is_binary
 from fastapi import Depends, FastAPI, HTTPException, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.security import APIKeyHeader
 from mcpm import MCPRouter, RouterConfig
@@ -742,8 +745,16 @@ if __name__ == '__main__':
 
     app = FastAPI(lifespan=lifespan)
 
+    # Add CORS middleware to allow all origins
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=['*'],
+        allow_credentials=False,
+        allow_methods=['*'],
+        allow_headers=['*'],
+    )
+
     # TODO below 3 exception handlers were recommended by Sonnet.
-    # Are these something we should keep?
     @app.exception_handler(Exception)
     async def global_exception_handler(request: Request, exc: Exception):
         logger.exception('Unhandled exception occurred:')

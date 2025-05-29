@@ -1,10 +1,20 @@
 import uvicorn
 from fastapi import FastAPI, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 
 from openhands.core.logger import openhands_logger as logger
 from openhands.utils.shutdown_listener import should_continue
 
 app = FastAPI()
+
+# Add CORS middleware to allow all origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=False,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 
 
 @app.websocket('/ws')
