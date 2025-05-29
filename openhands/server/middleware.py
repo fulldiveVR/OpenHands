@@ -25,18 +25,45 @@ class LocalhostCORSMiddleware(CORSMiddleware):
     """
 
     def __init__(self, app: ASGIApp) -> None:
-        # Always allow all origins, regardless of environment variables
+        allow_origins_str = os.getenv('PERMITTED_CORS_ORIGINS')
+        if allow_origins_str:
+            if allow_origins_str == '*':
+                allow_origins = ['*']
+                allow_credentials = False
+            else:
+                allow_origins = tuple(
+                    origin.strip() for origin in allow_origins_str.split(',')
+                )
+                allow_credentials = True
+        else:
+            # Default to localhost only if no environment variable is set
+            allow_origins = ()
+            allow_credentials = True
+
         super().__init__(
             app,
-            allow_origins=['*'],
-            allow_credentials=False,  # Set to False when using allow_origins=['*']
+            allow_origins=allow_origins,
+            allow_credentials=allow_credentials,
             allow_methods=['*'],
             allow_headers=['*'],
         )
 
     def is_allowed_origin(self, origin: str) -> bool:
-        # Always allow all origins for maximum compatibility
-        return True
+        # If PERMITTED_CORS_ORIGINS is set to *, allow everything
+        if os.getenv('PERMITTED_CORS_ORIGINS') == '*':
+            return True
+
+        if origin and not self.allow_origins and not self.allow_origin_regex:
+            parsed = urlparse(origin)
+            hostname = parsed.hostname or ''
+
+            # Allow any localhost/127.0.0.1 origin regardless of port
+            if hostname in ['localhost', '127.0.0.1']:
+                return True
+
+        # For configured origins, use the parent class's logic
+        result: bool = super().is_allowed_origin(origin)
+        return result
 
 
 class CacheControlMiddleware(BaseHTTPMiddleware):
