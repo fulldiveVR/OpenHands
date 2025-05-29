@@ -20,38 +20,23 @@ from openhands.server.user_auth import get_user_id
 
 class LocalhostCORSMiddleware(CORSMiddleware):
     """
-    Custom CORS middleware that allows any request from localhost/127.0.0.1 domains,
-    while using standard CORS rules for other origins.
+    Custom CORS middleware that allows any request from any origin.
+    This is useful for development and VM deployments.
     """
 
     def __init__(self, app: ASGIApp) -> None:
-        allow_origins_str = os.getenv('PERMITTED_CORS_ORIGINS')
-        if allow_origins_str:
-            allow_origins = tuple(
-                origin.strip() for origin in allow_origins_str.split(',')
-            )
-        else:
-            allow_origins = ()
+        # Always allow all origins, regardless of environment variables
         super().__init__(
             app,
-            allow_origins=allow_origins,
-            allow_credentials=True,
+            allow_origins=['*'],
+            allow_credentials=False,  # Set to False when using allow_origins=['*']
             allow_methods=['*'],
             allow_headers=['*'],
         )
 
     def is_allowed_origin(self, origin: str) -> bool:
-        if origin and not self.allow_origins and not self.allow_origin_regex:
-            parsed = urlparse(origin)
-            hostname = parsed.hostname or ''
-
-            # Allow any localhost/127.0.0.1 origin regardless of port
-            if hostname in ['localhost', '127.0.0.1']:
-                return True
-
-        # For missing origin or other origins, use the parent class's logic
-        result: bool = super().is_allowed_origin(origin)
-        return result
+        # Always allow all origins for maximum compatibility
+        return True
 
 
 class CacheControlMiddleware(BaseHTTPMiddleware):
