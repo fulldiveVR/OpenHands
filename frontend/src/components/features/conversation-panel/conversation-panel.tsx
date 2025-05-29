@@ -8,7 +8,6 @@ import { useDeleteConversation } from "#/hooks/mutation/use-delete-conversation"
 import { ConfirmDeleteModal } from "./confirm-delete-modal";
 import { LoadingSpinner } from "#/components/shared/loading-spinner";
 import { ExitConversationModal } from "./exit-conversation-modal";
-import { useClickOutsideElement } from "#/hooks/use-click-outside-element";
 
 interface ConversationPanelProps {
   onClose: () => void;
@@ -17,7 +16,6 @@ interface ConversationPanelProps {
 export function ConversationPanel({ onClose }: ConversationPanelProps) {
   const { t } = useTranslation();
   const { conversationId: currentConversationId } = useParams();
-  const ref = useClickOutsideElement<HTMLDivElement>(onClose);
   const navigate = useNavigate();
 
   const [confirmDeleteModalVisible, setConfirmDeleteModalVisible] =
@@ -56,22 +54,21 @@ export function ConversationPanel({ onClose }: ConversationPanelProps) {
 
   return (
     <div
-      ref={ref}
       data-testid="conversation-panel"
-      className="w-[350px] h-full border border-neutral-700 bg-base-secondary rounded-xl overflow-y-auto absolute"
+      className="w-full overflow-y-auto"
     >
       {isFetching && (
-        <div className="w-full h-full absolute flex justify-center items-center">
+        <div className="w-full py-8 flex justify-center items-center">
           <LoadingSpinner size="small" />
         </div>
       )}
       {error && (
-        <div className="flex flex-col items-center justify-center h-full">
+        <div className="flex flex-col items-center justify-center py-8">
           <p className="text-danger">{error.message}</p>
         </div>
       )}
-      {conversations?.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full">
+      {conversations?.length === 0 && !isFetching && (
+        <div className="flex flex-col items-center justify-center py-8">
           <p className="text-neutral-400">
             {t(I18nKey.CONVERSATION$NO_CONVERSATIONS)}
           </p>
