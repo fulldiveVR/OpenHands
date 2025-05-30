@@ -148,7 +148,7 @@ function HomeScreen() {
                 {isLoadingWizeTeams && (
                   <span className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
                 )}
-                {isLoadingWizeTeams ? t("Processing...") : t("Send to Coder")}
+                {isLoadingWizeTeams ? t("Processing...") : t("Send")}
               </button>
             </div>
           </div>
@@ -185,17 +185,17 @@ function HomeScreen() {
                         isLoading={isLoadingWizeTeams}
                       />
                     </div>
-                    
+
                     {isCompleted && (
                       <div className="mt-4 flex justify-center">
                         <button
                           onClick={() => {
                             // Get the final specification from the team session
                             const finalMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-                            
+
                             if (finalMessage) {
                               const specification = finalMessage.message || finalMessage.content || "";
-                              
+
                               // Create a conversation with the specification
                               createConversation({
                                 q: `Generated specification:\n\n${specification}`,
@@ -205,12 +205,12 @@ function HomeScreen() {
                           }}
                           className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
                         >
-                          Send to Coder
+                          Send
                         </button>
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Right side - Tasks */}
                   <div className="w-1/3 bg-base-primary border border-neutral-700 rounded-md p-4">
                     <h3 className="text-md font-medium mb-2">Tasks</h3>

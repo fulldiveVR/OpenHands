@@ -92,6 +92,19 @@ export function ChatInterface() {
     setMessageToSend(null);
   };
 
+  React.useEffect(() => {
+    // Only check when messages are loaded and there are no messages yet
+    if (!isLoadingMessages && events.length === 0) {
+      const pendingSpecification = localStorage.getItem('pendingSpecification');
+      if (pendingSpecification) {
+        // Send the specification as a user message
+        handleSendMessage(pendingSpecification, []);
+        // Remove the specification from localStorage to avoid showing it again
+        localStorage.removeItem('pendingSpecification');
+      }
+    }
+  }, [isLoadingMessages, events.length, handleSendMessage]);
+
   const handleStop = () => {
     posthog.capture("stop_button_clicked");
     send(generateAgentStateChangeEvent(AgentState.STOPPED));

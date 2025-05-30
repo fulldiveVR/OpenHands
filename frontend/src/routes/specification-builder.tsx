@@ -96,14 +96,31 @@ function SpecificationBuilderScreen() {
 
       // Format the specification based on the result structure
       let specification = '';
+      let formattedSpecification = '';
 
       if (typeof sessionResult.result === 'object') {
         // If it's an object with required_information or other structured data
         specification = JSON.stringify(sessionResult.result, null, 2);
+        
+        // Create a more readable formatted version for display
+        formattedSpecification = Object.entries(sessionResult.result)
+          .map(([key, value]) => {
+            const formattedKey = key.replace(/_/g, ' ').toUpperCase();
+            if (Array.isArray(value)) {
+              const listItems = value.map(item => `  - ${item}`).join('\n');
+              return `${formattedKey}:\n${listItems}`;
+            }
+            return `${formattedKey}: ${value}`;
+          })
+          .join('\n\n');
       } else {
         // If it's a string or other primitive
         specification = String(sessionResult.result);
+        formattedSpecification = specification;
       }
+
+      // Save the formatted specification to localStorage to display it in the new conversation
+      localStorage.setItem('pendingSpecification', formattedSpecification);
 
       // Create a conversation with the specification
       createConversation({
@@ -121,6 +138,34 @@ function SpecificationBuilderScreen() {
     if (finalMessage) {
       console.log('Final message found:', finalMessage);
       const specification = finalMessage.message || finalMessage.content || "";
+      
+      // Format the specification to be more readable
+      let formattedSpecification = specification;
+      
+      // Try to parse JSON if it looks like JSON
+      if (specification.trim().startsWith('{') && specification.trim().endsWith('}')) {
+        try {
+          const parsedSpec = JSON.parse(specification);
+          if (typeof parsedSpec === 'object') {
+            formattedSpecification = Object.entries(parsedSpec)
+              .map(([key, value]) => {
+                const formattedKey = key.replace(/_/g, ' ').toUpperCase();
+                if (Array.isArray(value)) {
+                  const listItems = value.map(item => `  - ${item}`).join('\n');
+                  return `${formattedKey}:\n${listItems}`;
+                }
+                return `${formattedKey}: ${value}`;
+              })
+              .join('\n\n');
+          }
+        } catch (e) {
+          // If parsing fails, use the original specification
+          console.log('Failed to parse specification as JSON:', e);
+        }
+      }
+
+      // Save the formatted specification to localStorage to display it in the new conversation
+      localStorage.setItem('pendingSpecification', formattedSpecification);
 
       // Create a conversation with the specification
       createConversation({

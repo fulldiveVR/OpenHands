@@ -55,6 +55,15 @@ function SettingsScreen() {
       className="bg-base-secondary border border-tertiary h-full rounded-xl flex flex-col"
     >
       <header className="px-3 py-1.5 border-b border-b-tertiary flex items-center gap-2">
+        <button
+          onClick={() => navigate('/')}
+          className="p-1 rounded-full hover:bg-neutral-700 transition-colors mr-1"
+          title="Back to home"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
         <SettingsIcon width={16} height={16} />
         <h1 className="text-sm leading-6">{t(I18nKey.SETTINGS$TITLE)}</h1>
       </header>

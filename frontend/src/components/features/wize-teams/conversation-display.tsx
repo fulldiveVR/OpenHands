@@ -151,18 +151,18 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
               JSON.stringify(sessionResult.result || sessionResult, null, 2)
             )}
           </div>
+        </div>
+      )}
 
-          {/* Send to Coder button */}
-          {onSendToCoder && (
-            <div className="mt-2 flex justify-center">
-              <button
-                onClick={onSendToCoder}
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark text-sm"
-              >
-                Send to Coder
-              </button>
-            </div>
-          )}
+      {/* Send to Coder button as a separate element */}
+      {hasSessionResult && onSendToCoder && isCompleted && (
+        <div className="mt-2 flex justify-center">
+          <button
+            onClick={onSendToCoder}
+            className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark text-sm"
+          >
+            Send to Coder
+          </button>
         </div>
       )}
 
