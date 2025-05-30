@@ -101,7 +101,7 @@ function SpecificationBuilderScreen() {
       if (typeof sessionResult.result === 'object') {
         // If it's an object with required_information or other structured data
         specification = JSON.stringify(sessionResult.result, null, 2);
-        
+
         // Create a more readable formatted version for display
         formattedSpecification = Object.entries(sessionResult.result)
           .map(([key, value]) => {
@@ -119,12 +119,13 @@ function SpecificationBuilderScreen() {
         formattedSpecification = specification;
       }
 
+      formattedSpecification  = formattedSpecification + "\nPlease don't start testing the app. just run to see success"
       // Save the formatted specification to localStorage to display it in the new conversation
       localStorage.setItem('pendingSpecification', formattedSpecification);
 
       // Create a conversation with the specification
       createConversation({
-        q: `Generated specification:\n\n${specification}`,
+        q: `Generated specification:\n\n${specification + "\nPlease don't start testing the app. just run to see success"}`,
         selectedRepository: selectedRepository // Pass the repository object, not just the ID
       });
 
@@ -138,10 +139,10 @@ function SpecificationBuilderScreen() {
     if (finalMessage) {
       console.log('Final message found:', finalMessage);
       const specification = finalMessage.message || finalMessage.content || "";
-      
+
       // Format the specification to be more readable
       let formattedSpecification = specification;
-      
+
       // Try to parse JSON if it looks like JSON
       if (specification.trim().startsWith('{') && specification.trim().endsWith('}')) {
         try {
@@ -209,7 +210,7 @@ function SpecificationBuilderScreen() {
 
       <div className="flex gap-4 flex-1 overflow-hidden">
         {/* Left side - Chat */}
-        <div className="flex-1 bg-base-primary border border-neutral-700 rounded-md p-4 flex flex-col">
+        <div className="flex-1 bg-base-primary border border-neutral-700 p-4 flex flex-col">
           <h3 className="text-md font-medium mb-2">Conversation</h3>
           <div className="flex-1 overflow-y-auto mb-4">
             <ConversationDisplay
@@ -249,7 +250,7 @@ function SpecificationBuilderScreen() {
         </div>
 
         {/* Right side - Tasks and Results */}
-        <div className="w-1/3 bg-base-primary border border-neutral-700 rounded-md p-4 flex flex-col">
+        <div className="w-1/3 bg-base-primary border border-neutral-700 p-4 flex flex-col">
           <h3 className="text-md font-medium mb-2">Tasks</h3>
           <div className="flex-1 overflow-y-auto">
             <TaskList
