@@ -18,12 +18,12 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages.length]);
-  
+
   // Check if we have session results to display
   const hasSessionResult = sessionResult && Object.keys(sessionResult || {}).length > 0;
   console.log('ConversationDisplay - hasSessionResult:', hasSessionResult);
   console.log('ConversationDisplay - sessionResult:', sessionResult);
-  
+
   // If loading and no messages and no results, show loading state
   if (isLoading && messages.length === 0 && !hasSessionResult) {
     return (
@@ -46,14 +46,38 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
 
   // Function to determine if a message is the final specification
   const isFinalSpecification = (message: IMessageRecord, index: number) => {
-    return index === messages.length - 1 && message.sender !== 'user';
+    // Only show as final specification if the session is completed and it's the last AI message
+    return isCompleted && index === messages.length - 1 && message.sender !== 'user';
   };
 
-  // Create an array of messages to display
-  const displayMessages = [...messages];
+  // Create an array of messages to display with duplicates removed
+  // Use a function instead of useMemo to avoid React hooks errors
+  const deduplicateMessages = (messages: IMessageRecord[]): IMessageRecord[] => {
+    // Use a Map to track unique messages by content
+    const uniqueMessages = new Map<string, IMessageRecord>();
+    
+    // Process messages in reverse order (newest first)
+    // so we keep the most recent version of any duplicate message
+    [...messages].reverse().forEach((message) => {
+      // Create a key based on message content and sender
+      const key = `${message.sender}-${message.message}`;
+      
+      // Only add if we haven't seen this message content before
+      if (!uniqueMessages.has(key)) {
+        uniqueMessages.set(key, message);
+      }
+    });
+    
+    // Convert back to array and reverse to original order
+    return Array.from(uniqueMessages.values()).reverse();
+  };
+  
+  // Apply deduplication to messages
+  const displayMessages = deduplicateMessages(messages);
 
   // Log for debugging
-  console.log('ConversationDisplay - messages:', messages);
+  console.log('ConversationDisplay - original messages count:', messages.length);
+  console.log('ConversationDisplay - deduplicated messages count:', displayMessages.length);
   console.log('ConversationDisplay - isCompleted:', isCompleted);
 
   return (

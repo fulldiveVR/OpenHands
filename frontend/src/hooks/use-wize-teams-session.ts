@@ -27,18 +27,32 @@ const POLLING_INTERVAL = WIZE_TEAMS_CONFIG.POLLING_INTERVAL;
 
 export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWizeTeamsSessionResult => {
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
   const [messages, setMessages] = useState<IMessageRecord[]>([]);
   const [sessionResult, setSessionResult] = useState<any>(null);
-  const [pendingInquiry, setPendingInquiry] = useState<IInquiry | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
+  const [pendingInquiry, setPendingInquiry] = useState<IInquiry | null>(null);
   const [isAwaitingUserInput, setIsAwaitingUserInput] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [pollingTimer, setPollingTimer] = useState<NodeJS.Timeout | null>(null);
   
+  // Track processed inquiries to avoid duplicates
+  const [processedInquiryIds, setProcessedInquiryIds] = useState<Set<string>>(new Set());
+
   // Use a ref to keep track of the polling timer for cleanup
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup effect to clear the polling timer when the component unmounts
+  useEffect(() => {
+    return () => {
+      // Clear the polling timer when the component unmounts
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Function to start a new session
   const startSession = useCallback(async (message: string) => {
@@ -48,16 +62,18 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
       setIsCompleted(false);
       setTasks([]);
       setMessages([]);
-      
+      // Clear processed inquiry IDs for a new session
+      setProcessedInquiryIds(new Set());
+
       // Create a new team session using the real service
       const newSessionId = await wizeTeamsService.createTeamSession(teamId, message);
       setSessionId(newSessionId);
-      
+
       // Start polling for results
       const timer = setInterval(() => {
         fetchSessionData(newSessionId);
       }, POLLING_INTERVAL);
-      
+
       setPollingTimer(timer);
       pollingTimerRef.current = timer;
     } catch (err) {
@@ -65,21 +81,41 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
       setIsLoading(false);
     }
   }, [teamId]);
-  
+
   // Function to continue an existing session
   const continueSession = useCallback(async (sid: string, message: string) => {
     try {
       setIsLoading(true);
-      
+
+      // Add the user's message to the messages array to preserve it in the chat history
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          id: `user-${Date.now()}`,
+          userId: 'user',
+          sessionId: sid,
+          sender: 'user',
+          message: message,
+          agentId: '',
+          finishReason: '',
+          created: new Date(),
+          updated: new Date(),
+          variables: {}
+        }
+      ]);
+
       // Continue the team session
       await wizeTeamsService.continueSession(teamId, sid, message);
-      
+
+      // Immediately fetch session data to update the conversation
+      fetchSessionData(sid);
+
       // If there's no polling timer active, start one
       if (!pollingTimerRef.current) {
         const timer = setInterval(() => {
           fetchSessionData(sid);
         }, POLLING_INTERVAL);
-        
+
         setPollingTimer(timer);
         pollingTimerRef.current = timer;
       }
@@ -92,30 +128,27 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
   // Function to fetch session data (tasks and messages)
   const fetchSessionData = useCallback(async (sid: string) => {
     try {
-      // Get the team session results
-      const results = await wizeTeamsService.getTeamSessionResults(sid);
-      
+      // Get the team session results - now returns the full team session directly
+      const teamSession = await wizeTeamsService.getTeamSessionResults(sid);
+      console.log('Team session:', teamSession);
+
       // Update the tasks
-      setTasks(results.results);
-      
+      setTasks(teamSession.backlog || []);
+
       // Store the session result
-      if (results.status === RunStatus.Complete) {
+      if (teamSession.status === RunStatus.Complete) {
         console.log('Session is complete, preparing results');
-        
-        // Get full session information to access teamSession.result
-        const teamSession = await wizeTeamsService.getTeamSession(sid);
-        console.log('Full teamSession:', teamSession);
-        
+
         // Create result object
         const finalResults: Record<string, any> = {};
-        
+
         // Check if result field exists in teamSession
         if (teamSession && teamSession.result) {
           console.log('Found result in teamSession:', teamSession.result);
           finalResults.result = teamSession.result;
           finalResults.summary = "Task completed successfully";
           finalResults.completedAt = new Date().toISOString();
-          
+
           console.log('Final session result:', finalResults);
           setSessionResult(finalResults);
         } else {
@@ -130,19 +163,19 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
               };
               finalResults.summary = "Specification generated successfully";
               finalResults.completedAt = new Date().toISOString();
-              
+
               console.log('Final session result from message:', finalResults);
               setSessionResult(finalResults);
             }
           }
         }
       }
-      
+
       // Check if the session is completed
-      if (results.completed || results.status === RunStatus.Complete) {
+      if (teamSession.status === RunStatus.Complete) {
         setIsCompleted(true);
         setIsAwaitingUserInput(false);
-        
+
         // Clear the polling timer if the session is completed
         if (pollingTimerRef.current) {
           clearInterval(pollingTimerRef.current);
@@ -150,41 +183,109 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
           pollingTimerRef.current = null;
         }
       }
-      
+
       // Check if the session is awaiting user input
-      if (results.status === RunStatus.AwaitingToolResult) {
-        // Проверяем, вызван ли инструмент ASK_USER
-        const isAskUserTool = results.toolTypeCalled === FunctionsType.ASK_USER;
-        
-        // Получаем запросы для сессии
-        const inquiries = await wizeTeamsService.getSessionInquiries(sid);
-        
-        // Ищем запрос, который требует ответа пользователя
-        // Запрос должен быть типа ASK_USER и не иметь ответа
-        const pendingInquiry = inquiries.find(inquiry => 
+      if (teamSession.status === RunStatus.AwaitingToolResult) {
+        // Check if ASK_USER tool is called
+        const isAskUserTool = teamSession.toolTypeCalled === FunctionsType.ASK_USER;
+
+        // Get inquiries for the session - need to use sessionId from teamSession, not teamSessionId
+        const inquiries = await wizeTeamsService.getSessionInquiries(teamSession.sessionId);
+
+        // Find an inquiry that requires a user response
+        // The inquiry should be of type ASK_USER and have no response
+        const pendingInquiry = inquiries.find(inquiry =>
           (inquiry.toolType === FunctionsType.ASK_USER || isAskUserTool) && !inquiry.response
         );
-        
+
         if (pendingInquiry) {
-          // Нашли запрос, требующий ответа пользователя
+          // Found an inquiry requiring user response
           setPendingInquiry(pendingInquiry);
           setIsAwaitingUserInput(true);
           console.log('Awaiting user input for inquiry:', pendingInquiry);
         } else {
-          // Запросов, требующих ответа пользователя, нет
+          // No inquiries requiring user response
           setPendingInquiry(null);
           setIsAwaitingUserInput(false);
         }
       } else {
-        // Сессия не ожидает результата инструмента
+        // Session is not awaiting tool result
         setPendingInquiry(null);
         setIsAwaitingUserInput(false);
       }
-      
-      // Get the session messages
-      const sessionMessages = await wizeTeamsService.getSessionMessages(sid);
-      setMessages(sessionMessages);
-      
+
+      // Check if there's a pending inquiry to add to our local messages as an AI message
+      if (teamSession.status === RunStatus.AwaitingToolResult && teamSession.toolTypeCalled === FunctionsType.ASK_USER) {
+        try {
+          // Get inquiries for the session
+          const inquiries = await wizeTeamsService.getSessionInquiries(teamSession.sessionId);
+          console.log('Inquiries for session:', inquiries);
+          
+          // Find the latest unanswered inquiry
+          const latestInquiry = inquiries
+            .filter(inquiry => !inquiry.response)
+            .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())[0];
+          
+          if (latestInquiry) {
+            console.log('Latest inquiry:', latestInquiry);
+            console.log('Current processed inquiry IDs:', processedInquiryIds);
+            
+            // Format the inquiry message
+            const inquiryText = typeof latestInquiry.inquiry === 'string'
+              ? latestInquiry.inquiry
+              : latestInquiry.inquiry?.question ||
+                latestInquiry.inquiry?.message ||
+                latestInquiry.inquiry?.text ||
+                latestInquiry.inquiry?.prompt ||
+                latestInquiry.question ||
+                'Please provide additional information';
+            
+            // Use a ref to track if we're currently processing this inquiry
+            // This prevents race conditions with React's batched state updates
+            if (!processedInquiryIds.has(latestInquiry.id)) {
+              console.log(`Processing new inquiry ${latestInquiry.id}`);
+              
+              // Update both messages and processedInquiryIds atomically
+              // First, create the new message
+              const aiMessage = {
+                id: `ai-inquiry-${latestInquiry.id}`,
+                userId: 'ai',
+                sessionId: sid,
+                sender: 'ai',
+                message: inquiryText,
+                agentId: `Question from ${latestInquiry.agentId || teamSession.currentAgent || ''}`,
+                finishReason: '',
+                created: new Date(latestInquiry.created),
+                updated: new Date(),
+                variables: {}
+              };
+              
+              // Update both states in one render cycle
+              const newProcessedIds = new Set(processedInquiryIds);
+              newProcessedIds.add(latestInquiry.id);
+              setProcessedInquiryIds(newProcessedIds);
+              
+              // Check if this message already exists in the messages array
+              const messageExists = messages.some(msg => 
+                msg.id === aiMessage.id || 
+                (msg.sender === 'ai' && msg.message === aiMessage.message)
+              );
+              
+              if (!messageExists) {
+                console.log('Adding new AI inquiry to chat history:', aiMessage);
+                setMessages(prevMessages => [...prevMessages, aiMessage]);
+              } else {
+                console.log('Message already exists in chat history, not adding duplicate');
+              }
+            } else {
+              console.log(`Inquiry ${latestInquiry.id} already processed, not adding to chat history`);
+            }
+          }
+        } catch (error) {
+          console.error('Error processing inquiries:', error);
+        }
+      }
+
       // Set loading to false once we have the data
       setIsLoading(false);
     } catch (err) {
@@ -197,20 +298,42 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
   const continueSessionAfterUserReply = useCallback(async (inquiryId: string, message: string) => {
     try {
       setIsLoading(true);
-      
+
       // Update the inquiry response
       await wizeTeamsService.continueSessionAfterUserReply(inquiryId, message);
-      
+
       // Clear the pending inquiry
       setPendingInquiry(null);
       setIsAwaitingUserInput(false);
-      
+
+      // Add the user's message to the messages array to preserve it in the chat history
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          id: `user-${Date.now()}`,
+          userId: 'user',
+          sessionId: sessionId || '',
+          sender: 'user',
+          message: message,
+          agentId: '',
+          finishReason: '',
+          created: new Date(),
+          updated: new Date(),
+          variables: {}
+        }
+      ]);
+
+      // Immediately fetch session data to update the conversation
+      if (sessionId) {
+        fetchSessionData(sessionId);
+      }
+
       // If there's no polling timer active, start one
       if (!pollingTimerRef.current && sessionId) {
         const timer = setInterval(() => {
           fetchSessionData(sessionId);
         }, POLLING_INTERVAL);
-        
+
         setPollingTimer(timer);
         pollingTimerRef.current = timer;
       }

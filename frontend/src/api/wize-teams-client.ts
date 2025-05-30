@@ -68,19 +68,10 @@ export const wizeTeamsService = {
   },
 
   // Get results from a team session
-  getTeamSessionResults: async (teamSessionId: string): Promise<TeamSessionResults> => {
+  getTeamSessionResults: async (teamSessionId: string): Promise<ITeamSession> => {
     try {
-      const teamSession = await teamsApiClient.getTeamSession(teamSessionId);
-
-      // Map the team session data to our expected format
-      const results: ITask[] = teamSession.backlog || [];
-
-      return {
-        results,
-        status: teamSession.status,
-        completed: teamSession.status === RunStatus.Complete,
-        toolTypeCalled: teamSession.toolTypeCalled
-      };
+      // Just return the full team session directly
+      return await teamsApiClient.getTeamSession(teamSessionId);
     } catch (error) {
       console.error('Error getting team session results:', error);
       throw error;
