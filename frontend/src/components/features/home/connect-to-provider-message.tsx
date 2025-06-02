@@ -1,21 +1,32 @@
-import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { BrandButton } from "#/components/features/settings/brand-button";
+import { BrandButton } from "../settings/brand-button";
 import { useSettings } from "#/hooks/query/use-settings";
+import { useUserProviders } from "#/hooks/use-user-providers";
 
-export function ConnectToProviderMessage() {
+interface ConnectToProviderMessageProps {
+  onStartWithRepo?: () => void;
+}
+
+export function ConnectToProviderMessage({ onStartWithRepo }: ConnectToProviderMessageProps) {
   const { isLoading } = useSettings();
+  const { providers } = useUserProviders();
   const { t } = useTranslation();
+  
+  const isGitHubTokenSet = providers.includes("github");
 
   return (
     <div className="flex flex-col gap-4">
       <p>{t("HOME$CONNECT_PROVIDER_MESSAGE")}</p>
-      <Link data-testid="navigate-to-settings-button" to="/settings/git">
-        <BrandButton type="button" variant="primary" isDisabled={isLoading}>
-          {!isLoading && t("SETTINGS$TITLE")}
-          {isLoading && t("HOME$LOADING")}
-        </BrandButton>
-      </Link>
+      <BrandButton 
+        data-testid="start-with-repo-button" 
+        type="button" 
+        variant="primary" 
+        isDisabled={isLoading || !isGitHubTokenSet}
+        onClick={onStartWithRepo}
+      >
+        {!isLoading && "Start with Repository"}
+        {isLoading && t("HOME$LOADING")}
+      </BrandButton>
     </div>
   );
 }

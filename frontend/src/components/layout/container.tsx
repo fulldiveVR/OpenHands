@@ -8,7 +8,6 @@ interface ContainerProps {
     label: string | React.ReactNode;
     to: string;
     icon?: React.ReactNode;
-    isBeta?: boolean;
     isLoading?: boolean;
     rightContent?: React.ReactNode;
   }[];
@@ -25,7 +24,7 @@ export function Container({
   return (
     <div
       className={clsx(
-        "bg-base-secondary border border-neutral-600 rounded-xl flex flex-col h-full",
+        "bg-base-secondary border border-neutral-600 flex flex-col h-full",
         className,
       )}
     >
@@ -38,7 +37,6 @@ export function Container({
                 to={to}
                 label={l}
                 icon={icon}
-                isBeta={isBeta}
                 isLoading={isLoading}
                 rightContent={rightContent}
               />
@@ -51,7 +49,7 @@ export function Container({
           {label}
         </div>
       )}
-      <div className="overflow-hidden flex-grow rounded-b-xl">{children}</div>
+      <div className="overflow-hidden flex-grow">{children}</div>
     </div>
   );
 }

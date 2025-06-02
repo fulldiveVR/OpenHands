@@ -24,7 +24,7 @@ export function ConversationPanelButton({
       onClick={onClick}
     >
       <FaListUl
-        size={22}
+        size={12}
         className={cn(isOpen ? "text-white" : "text-[#9099AC]")}
       />
     </TooltipButton>

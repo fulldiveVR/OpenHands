@@ -117,7 +117,7 @@ function GitSettingsScreen() {
             />
           )}
 
-          {!isSaas && (
+          {/* {!isSaas && (
             <GitLabTokenInput
               name="gitlab-token-input"
               isGitLabTokenSet={isGitLabTokenSet}
@@ -129,7 +129,7 @@ function GitSettingsScreen() {
               }}
               gitlabHostSet={existingGitlabHost}
             />
-          )}
+          )} */}
         </div>
       )}
 

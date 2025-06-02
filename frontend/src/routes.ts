@@ -8,6 +8,7 @@ import {
 export default [
   layout("routes/root-layout.tsx", [
     index("routes/home.tsx"),
+    route("specification-builder", "routes/specification-builder.tsx"),
     route("accept-tos", "routes/accept-tos.tsx"),
     route("settings", "routes/settings.tsx", [
       index("routes/llm-settings.tsx"),
