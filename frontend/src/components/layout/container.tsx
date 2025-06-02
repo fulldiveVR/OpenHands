@@ -8,7 +8,6 @@ interface ContainerProps {
     label: string | React.ReactNode;
     to: string;
     icon?: React.ReactNode;
-    isBeta?: boolean;
     isLoading?: boolean;
     rightContent?: React.ReactNode;
   }[];
@@ -38,7 +37,6 @@ export function Container({
                 to={to}
                 label={l}
                 icon={icon}
-                isBeta={isBeta}
                 isLoading={isLoading}
                 rightContent={rightContent}
               />

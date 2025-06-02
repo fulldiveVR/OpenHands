@@ -119,13 +119,12 @@ function SpecificationBuilderScreen() {
         formattedSpecification = specification;
       }
 
-      formattedSpecification  = formattedSpecification + "\nPlease don't start testing the app. just run to see success"
       // Save the formatted specification to localStorage to display it in the new conversation
       localStorage.setItem('pendingSpecification', formattedSpecification);
 
       // Create a conversation with the specification
       createConversation({
-        q: `Generated specification:\n\n${specification + "\nPlease don't start testing the app. just run to see success"}`,
+        q: `Generated specification:\n\n${specification}`,
         selectedRepository: selectedRepository // Pass the repository object, not just the ID
       });
 

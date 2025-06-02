@@ -80,13 +80,13 @@ function GitChanges() {
             )}
           </div>
 
-          <div className="absolute inset-x-0 bottom-0">
+          {/* <div className="absolute inset-x-0 bottom-0">
             {!isError && gitChanges?.length === 0 && (
               <div className="max-w-2xl mb-4 text-m bg-tertiary rounded-xl p-4 text-left mx-auto">
                 <RandomTip />
               </div>
             )}
-          </div>
+          </div> */}
         </div>
       ) : (
         gitChanges.map((change) => (

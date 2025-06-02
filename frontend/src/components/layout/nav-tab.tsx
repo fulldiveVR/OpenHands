@@ -36,7 +36,6 @@ export function NavTab({
           <div className="flex items-center gap-2">
             <div className={cn(isActive && "text-logo")}>{icon}</div>
             {label}
-            {isBeta && <BetaBadge />}
           </div>
           <div className="flex items-center gap-2">
             {rightContent}
