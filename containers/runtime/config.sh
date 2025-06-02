@@ -14,3 +14,18 @@ DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_rxe1vnlw6plmopqa
 
 DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
 DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_rxe1vnlw6plmopqa
+
+DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
+DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
+
+DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
+DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
+
+DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
+DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
+
+DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
+DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
+
+DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
+DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
