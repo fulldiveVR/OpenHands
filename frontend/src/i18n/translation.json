@@ -6044,7 +6044,7 @@
         "ar": "لقد نفدت رصيدك من OpenHands",
         "fr": "Vous n'avez plus de crédits OpenHands",
         "tr": "OpenHands kredileriniz tükendi",
-        "de": "Ihre OpenHands-Guthaben sind aufgebraucht",
+        "de": "Ihre OpenHands-Guthaben sind aufgebraucht"
     },
     "STATUS$ERROR_LLM_CONTENT_POLICY_VIOLATION": {
         "en": "Content policy violation. The output was blocked by content filtering policy.",
@@ -8264,7 +8264,7 @@
         "ar": "إرسال...",
         "fr": "Envoi...",
         "tr": "Gönderiliyor...",
-        "de": "Senden...",
+        "de": "Senden..."
     },
     "FEEDBACK$SUBMITTING_MESSAGE": {
         "en": "Submitting feedback, please wait...",

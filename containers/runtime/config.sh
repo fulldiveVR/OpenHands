@@ -29,3 +29,6 @@ DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
 
 DOCKER_IMAGE_TAG=oh_v0.39.2_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
 DOCKER_IMAGE_SOURCE_TAG=oh_v0.39.2_21dw5cow8uicajef_shhbavokdgryite1
+
+DOCKER_IMAGE_TAG=oh_v0.40.0_image_nikolaik_s_python-nodejs_tag_python3.12-nodejs22
+DOCKER_IMAGE_SOURCE_TAG=oh_v0.40.0_7y1zx1cnq8pqlz3a_pg4nkldvrjyzfvtt
