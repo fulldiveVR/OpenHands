@@ -1,4 +1,36 @@
 {
+    "HOME$LAUNCH_FROM_SCRATCH": {
+        "en": "Launch from Scratch",
+        "ja": "ゼロから始める",
+        "zh-CN": "从零开始",
+        "zh-TW": "從零開始",
+        "ko-KR": "처음부터 시작",
+        "no": "Start fra bunnen",
+        "it": "Inizia da zero",
+        "pt": "Começar do zero",
+        "es": "Comenzar desde cero",
+        "ar": "البدء من الصفر",
+        "fr": "Démarrer de zéro",
+        "tr": "Sıfırdan başla",
+        "de": "Von Grund auf starten",
+        "uk": "Почати з нуля"
+    },
+    "HOME$READ_THIS": {
+        "en": "Read this",
+        "ja": "こちらを読む",
+        "zh-CN": "阅读此内容",
+        "zh-TW": "閱讀此內容",
+        "ko-KR": "이것을 읽어보세요",
+        "no": "Les dette",
+        "it": "Leggi questo",
+        "pt": "Leia isto",
+        "es": "Leer esto",
+        "ar": "اقرأ هذا",
+        "fr": "Lire ceci",
+        "tr": "Bunu oku",
+        "de": "Lies dies",
+        "uk": "Прочитайте це"
+    },
     "AUTH$LOGGING_BACK_IN": {
         "en": "Logging back into Wize Teams...",
         "ja": "Wize Teamsに再ログインしています...",
@@ -6000,19 +6032,19 @@
         "tr": "Çalışma zamanına bağlanırken bir hata oluştu. Lütfen sayfayı yenileyin."
     },
     "STATUS$ERROR_LLM_OUT_OF_CREDITS": {
-        "en": "You're out of Wize Teams Credits",
-        "ja": "Wize Teamsクレジットが不足しています",
-        "zh-CN": "您的Wize Teams点数已用完",
-        "zh-TW": "您的Wize Teams點數已用完",
-        "ko-KR": "Wize Teams 크레딧이 소진되었습니다",
-        "no": "Du er tom for Wize Teams-kreditter",
-        "it": "Hai esaurito i crediti Wize Teams",
-        "pt": "Você está sem créditos Wize Teams",
-        "es": "Te has quedado sin créditos de Wize Teams",
-        "ar": "لقد نفدت رصيدك من Wize Teams",
-        "fr": "Vous n'avez plus de crédits Wize Teams",
-        "tr": "Wize Teams kredileriniz tükendi",
-        "de": "Ihre Wize Teams-Guthaben sind aufgebraucht"
+        "en": "You're out of OpenHands Credits",
+        "ja": "OpenHandsクレジットが不足しています",
+        "zh-CN": "您的OpenHands点数已用完",
+        "zh-TW": "您的OpenHands點數已用完",
+        "ko-KR": "OpenHands 크레딧이 소진되었습니다",
+        "no": "Du er tom for OpenHands-kreditter",
+        "it": "Hai esaurito i crediti OpenHands",
+        "pt": "Você está sem créditos OpenHands",
+        "es": "Te has quedado sin créditos de OpenHands",
+        "ar": "لقد نفدت رصيدك من OpenHands",
+        "fr": "Vous n'avez plus de crédits OpenHands",
+        "tr": "OpenHands kredileriniz tükendi",
+        "de": "Ihre OpenHands-Guthaben sind aufgebraucht",
     },
     "STATUS$ERROR_LLM_CONTENT_POLICY_VIOLATION": {
         "en": "Content policy violation. The output was blocked by content filtering policy.",
@@ -8232,7 +8264,7 @@
         "ar": "إرسال...",
         "fr": "Envoi...",
         "tr": "Gönderiliyor...",
-        "de": "Senden..."
+        "de": "Senden...",
     },
     "FEEDBACK$SUBMITTING_MESSAGE": {
         "en": "Submitting feedback, please wait...",
