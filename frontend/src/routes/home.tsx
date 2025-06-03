@@ -63,6 +63,12 @@ function HomeScreen() {
   const isCreatingConversation =
     isPending || isSuccess || isCreatingConversationElsewhere;
 
+  console.log('Debug - isCreatingConversation:', isCreatingConversation, {
+    isPending,
+    isSuccess,
+    isCreatingConversationElsewhere
+  });
+
   const providersAreSet = providers.length > 0;
 
   const [inputValue, setInputValue] = React.useState("");
@@ -103,6 +109,18 @@ function HomeScreen() {
     }
   };
 
+  const handleDirectCodeBuild = () => {
+    // Create a conversation to open the coding environment
+    // Use input if provided, otherwise use a minimal prompt that won't auto-generate
+    const query = inputValue.trim() || "";
+
+    createConversation({
+      q: query,
+      selectedRepository: selectedRepository
+    });
+    setInputValue("");
+  };
+
   return (
     <div
       data-testid="home-screen"
@@ -141,6 +159,17 @@ function HomeScreen() {
             </div>
             <div className="absolute bottom-4 right-4 flex gap-2">
               <button
+                type="button"
+                onClick={handleDirectCodeBuild}
+                disabled={isCreatingConversation}
+                className="px-3 py-1 text-sm bg-basic text-white rounded-md hover:bg-basic/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+              >
+                {isCreatingConversation && (
+                  <span className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
+                )}
+                {isCreatingConversation ? t("Processing...") : "Code Build"}
+              </button>
+              <button
                 type="submit"
                 disabled={isLoadingWizeTeams || !inputValue.trim()}
                 className="px-3 py-1 text-sm bg-primary text-white rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
@@ -148,7 +177,7 @@ function HomeScreen() {
                 {isLoadingWizeTeams && (
                   <span className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
                 )}
-                {isLoadingWizeTeams ? t("Processing...") : t("Send")}
+                {isLoadingWizeTeams ? t("Processing...") : "Build Spec"}
               </button>
             </div>
           </div>
