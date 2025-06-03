@@ -63,6 +63,12 @@ function HomeScreen() {
   const isCreatingConversation =
     isPending || isSuccess || isCreatingConversationElsewhere;
 
+  console.log('Debug - isCreatingConversation:', isCreatingConversation, {
+    isPending,
+    isSuccess,
+    isCreatingConversationElsewhere
+  });
+
   const providersAreSet = providers.length > 0;
 
   const [inputValue, setInputValue] = React.useState("");
@@ -104,14 +110,15 @@ function HomeScreen() {
   };
 
   const handleDirectCodeBuild = () => {
-    if (inputValue.trim()) {
-      // Create a conversation directly with the task description, skipping spec building
-      createConversation({
-        q: inputValue,
-        selectedRepository: selectedRepository
-      });
-      setInputValue("");
-    }
+    // Create a conversation to open the coding environment
+    // Use input if provided, otherwise use a minimal prompt that won't auto-generate
+    const query = inputValue.trim() || "";
+
+    createConversation({
+      q: query,
+      selectedRepository: selectedRepository
+    });
+    setInputValue("");
   };
 
   return (
@@ -154,7 +161,7 @@ function HomeScreen() {
               <button
                 type="button"
                 onClick={handleDirectCodeBuild}
-                disabled={isCreatingConversation || !inputValue.trim()}
+                disabled={isCreatingConversation}
                 className="px-3 py-1 text-sm bg-basic text-white rounded-md hover:bg-basic/80 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
               >
                 {isCreatingConversation && (
