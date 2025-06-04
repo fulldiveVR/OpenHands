@@ -198,10 +198,10 @@ function SpecificationBuilderScreen() {
           <h1 className="text-2xl font-semibold">Specification Builder</h1>
         </div>
         <div className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
-          isCompleted ? 'bg-blue-900 text-blue-300' : 'bg-green-900 text-green-300'
+          isCompleted ? 'bg-green-900 text-green-300' : 'bg-blue-900 text-blue-300'
         }`}>
           {!isCompleted && (
-            <span className="animate-pulse h-2 w-2 bg-green-300 rounded-full"></span>
+            <span className="animate-pulse h-2 w-2 bg-blue-300 rounded-full"></span>
           )}
           {isCompleted ? 'Completed' : 'In Progress'}
         </div>

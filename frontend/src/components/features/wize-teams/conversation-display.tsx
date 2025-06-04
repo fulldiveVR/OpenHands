@@ -1,5 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { IMessageRecord } from '../../../api/wize-teams.types';
+import Markdown from "react-markdown";
+import { code } from "../markdown/code";
+import { ul, ol } from "../markdown/list";
+import { anchor } from "../markdown/anchor";
+import { paragraph } from "../markdown/paragraph";
 
 interface ConversationDisplayProps {
   messages: IMessageRecord[];
@@ -110,8 +115,18 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
               </span>
             )}
           </div>
-          <div className="text-sm whitespace-pre-wrap">
-            {message.message || message.content}
+          <div className="text-sm">
+            <Markdown
+              components={{
+                code,
+                ul,
+                ol,
+                a: anchor,
+                p: paragraph,
+              }}
+            >
+              {message.message || message.content}
+            </Markdown>
           </div>
         </div>
       ))}
@@ -129,7 +144,7 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
           </div>
 
           {/* Display results in formatted view */}
-          <div className="text-sm whitespace-pre-wrap mb-3">
+          <div className="text-sm mb-3">
             {sessionResult.result && typeof sessionResult.result === 'object' ? (
               <div>
                 {Object.entries(sessionResult.result).map(([key, value]) => (
@@ -138,17 +153,53 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
                     {Array.isArray(value) ? (
                       <ul className="list-disc pl-5">
                         {value.map((item, index) => (
-                          <li key={index}>{item}</li>
+                          <li key={index}>
+                            <Markdown
+                              components={{
+                                code,
+                                ul,
+                                ol,
+                                a: anchor,
+                                p: paragraph,
+                              }}
+                            >
+                              {String(item)}
+                            </Markdown>
+                          </li>
                         ))}
                       </ul>
                     ) : (
-                      <div>{String(value)}</div>
+                      <div>
+                        <Markdown
+                          components={{
+                            code,
+                            ul,
+                            ol,
+                            a: anchor,
+                            p: paragraph,
+                          }}
+                        >
+                          {String(value)}
+                        </Markdown>
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              JSON.stringify(sessionResult.result || sessionResult, null, 2)
+              <Markdown
+                components={{
+                  code,
+                  ul,
+                  ol,
+                  a: anchor,
+                  p: paragraph,
+                }}
+              >
+                {typeof sessionResult.result === 'string' 
+                  ? sessionResult.result 
+                  : JSON.stringify(sessionResult.result || sessionResult, null, 2)}
+              </Markdown>
             )}
           </div>
         </div>

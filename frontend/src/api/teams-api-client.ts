@@ -2,6 +2,7 @@ import type { AxiosInstance } from "axios";
 import axios from "axios";
 // @ts-ignore
 import { getSessionToken } from "./session-token";
+import { displayErrorToast } from "../utils/custom-toast-handlers";
 import {
   ITeam,
   ITeamSession,
@@ -50,6 +51,7 @@ export class TeamsApiClient {
   private setToken(): void {
     const session_token = getSessionToken();
     if (!session_token) {
+      displayErrorToast("rf Authentication token is missing. Please sign in again.");
       throw "no token error";
     }
 
