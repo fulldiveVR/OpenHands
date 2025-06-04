@@ -189,21 +189,6 @@ function AppContent() {
     <WsClientProvider conversationId={conversationId}>
       <EventHandler>
         <div data-testid="app-route" className="flex flex-col h-full gap-3">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2 rounded-full hover:bg-neutral-700 transition-colors"
-              title="Back to home"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <Controls
-              setSecurityOpen={onSecurityModalOpen}
-              showSecurityLock={!!settings?.SECURITY_ANALYZER}
-            />
-          </div>
           <div className="flex h-full overflow-auto">{renderMain()}</div>
 
           {settings && (
