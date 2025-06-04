@@ -100,7 +100,7 @@ const getStatusIndicatorColor = (status: TaskStatus): string => {
     case TaskStatus.Done:
       return 'bg-green-500';
     case TaskStatus.Pending:
-      return 'text-neutral-400';
+      return 'bg-neutral-400';
     case TaskStatus.InProgress:
       return 'bg-blue-500';
     case TaskStatus.Failed:
