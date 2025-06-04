@@ -37,7 +37,15 @@ function HomeScreen() {
   } = useCreateConversation();
   const isCreatingConversationElsewhere = useIsCreatingConversation();
   const { data: conversations, isFetching, error } = useUserConversations();
-  const { data: repositories, isLoading: isLoadingRepositories } = useUserRepositories();
+
+  // Check if GitHub token is set
+  const hasGithubToken = providers.includes("github");
+
+  // Only fetch repositories if GitHub token is available
+  const {
+    data: repositories,
+    isLoading: isLoadingRepositories
+  } = useUserRepositories(hasGithubToken);
 
   // Wize Teams integration
   const {
@@ -142,20 +150,32 @@ function HomeScreen() {
               className="w-full h-32 p-4 bg-base-primary border border-neutral-700 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <div className="absolute bottom-4 left-4 flex items-center gap-2">
-              <span className="text-sm text-neutral-400">{t("Repository")}:</span>
-              <select
-                value={selectedRepository?.id.toString() || ""}
-                onChange={(e) => handleRepoSelection(e.target.value || null)}
-                className="px-2 py-1 text-sm bg-base-primary border border-neutral-700 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                disabled={!providersAreSet || isLoadingRepositories}
-              >
-                <option value="">{t("None")}</option>
-                {repositories?.map((repo: GitRepository) => (
-                  <option key={repo.id} value={repo.id.toString()}>
-                    {repo.full_name}
-                  </option>
-                ))}
-              </select>
+              {hasGithubToken ? (
+                <>
+                  <span className="text-sm text-neutral-400">{t("Repository")}:</span>
+                  <select
+                    value={selectedRepository?.id.toString() || ""}
+                    onChange={(e) => handleRepoSelection(e.target.value || null)}
+                    className="px-2 py-1 text-sm bg-base-primary border border-neutral-700 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                    disabled={isLoadingRepositories}
+                  >
+                    <option value="">{t("Not selected")}</option>
+                    {repositories?.map((repo: GitRepository) => (
+                      <option key={repo.id} value={repo.id.toString()}>
+                        {repo.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings/git')}
+                  className="px-3 py-1 text-sm bg-neutral-500 text-white rounded-md hover:bg-neutral-400"
+                >
+                  Setup repository
+                </button>
+              )}
             </div>
             <div className="absolute bottom-4 right-4 flex gap-2">
               <button

@@ -184,8 +184,8 @@ export function ChatInterface() {
 
   return (
     <div className="h-full flex flex-col justify-between">
-      <ChatHeader 
-        title={conversation?.title} 
+      <ChatHeader
+        title={conversation?.title}
         onExportTrajectory={onClickExportTrajectoryButton} />
       {events.length === 0 && !optimisticUserMessage && (
         <ChatSuggestions onSuggestionsClick={setMessageToSend} />
