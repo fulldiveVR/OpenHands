@@ -132,6 +132,29 @@ export class TeamsApiClient {
   }
 
   /**
+   * Get debug messages for a session
+   * @param sessionId The ID of the session
+   * @param skip Number of messages to skip
+   * @param limit Maximum number of messages to return
+   * @returns Object containing debug messages and total count
+   */
+  public async getSessionDebugMessages(
+    sessionId: string,
+    skip = 0,
+    limit = 500,
+  ): Promise<{ messages: IMessageRecord[]; totalCount: number }> {
+    this.setToken();
+
+    const { data, headers } = await this.httpClient.get(`/sessions/${sessionId}/messages/debug`, {
+      params: {
+        skip,
+        limit,
+      },
+    });
+    return { messages: data, totalCount: Number.parseInt(headers["x-total-count"]) };
+  }
+
+  /**
    * Get inquiries for a session
    * @param sessionId The ID of the session
    * @returns Array of inquiries

@@ -36,9 +36,12 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
   const [isAwaitingUserInput, setIsAwaitingUserInput] = useState<boolean>(false);
   const [error, setError] = useState<Error | null>(null);
   const [pollingTimer, setPollingTimer] = useState<NodeJS.Timeout | null>(null);
-  
+
   // Track processed inquiries to avoid duplicates
   const [processedInquiryIds, setProcessedInquiryIds] = useState<Set<string>>(new Set());
+  
+  // Track previous tasks state to detect status changes
+  const previousTasksRef = useRef<ITask[]>([]);
 
   // Use a ref to keep track of the polling timer for cleanup
   const pollingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -133,7 +136,42 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
       console.log('Team session:', teamSession);
 
       // Update the tasks
-      setTasks(teamSession.backlog || []);
+      const newTasks = teamSession.backlog || [];
+      
+      // Check for tasks that changed status to in_progress
+      const previousTasks = previousTasksRef.current;
+      newTasks.forEach(newTask => {
+        // Find the corresponding task in the previous state
+        const prevTask = previousTasks.find(pt => pt.id === newTask.id);
+        
+        // If task status changed to in_progress, add a message to the chat
+        if (newTask.status === TaskStatus.InProgress && 
+            (!prevTask || prevTask.status !== TaskStatus.InProgress)) {
+          // Create a message that conforms to IMessageRecord type
+          const taskStartedMessage: IMessageRecord = {
+            id: `task-${newTask.id}-started-${Date.now()}`,
+            userId: teamSession.userId || '',
+            sessionId: sid,
+            sender: 'system',
+            message: `Task started: ${newTask.title}`,
+            agentId: '',  // Empty string as it's a system message
+            finishReason: '',
+            created: new Date(),
+            updated: new Date(),
+            variables: {},
+            type: 'notification'
+          };
+          
+          // Add the message to the chat
+          setMessages(prevMessages => [...prevMessages, taskStartedMessage]);
+        }
+      });
+      
+      // Update the previous tasks reference
+      previousTasksRef.current = newTasks;
+      
+      // Update tasks state
+      setTasks(newTasks);
 
       // Store the session result
       if (teamSession.status === RunStatus.Complete) {
@@ -171,12 +209,17 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
         }
       }
 
-      // Check if the session is completed
-      if (teamSession.status === RunStatus.Complete) {
+      // Check if the session is completed or has error
+      if (teamSession.status === RunStatus.Complete || teamSession.status === RunStatus.Error) {
         setIsCompleted(true);
         setIsAwaitingUserInput(false);
 
-        // Clear the polling timer if the session is completed
+        // Set error state if status is Error
+        if (teamSession.status === RunStatus.Error) {
+          setError(new Error(teamSession.stopReason || 'An error occurred during session execution'));
+        }
+
+        // Clear the polling timer if the session is completed or has error
         if (pollingTimerRef.current) {
           clearInterval(pollingTimerRef.current);
           setPollingTimer(null);
@@ -220,16 +263,16 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
           // Get inquiries for the session
           const inquiries = await wizeTeamsService.getSessionInquiries(teamSession.sessionId);
           console.log('Inquiries for session:', inquiries);
-          
+
           // Find the latest unanswered inquiry
           const latestInquiry = inquiries
             .filter(inquiry => !inquiry.response)
             .sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime())[0];
-          
+
           if (latestInquiry) {
             console.log('Latest inquiry:', latestInquiry);
             console.log('Current processed inquiry IDs:', processedInquiryIds);
-            
+
             // Format the inquiry message
             const inquiryText = typeof latestInquiry.inquiry === 'string'
               ? latestInquiry.inquiry
@@ -239,12 +282,12 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
                 latestInquiry.inquiry?.prompt ||
                 latestInquiry.question ||
                 'Please provide additional information';
-            
+
             // Use a ref to track if we're currently processing this inquiry
             // This prevents race conditions with React's batched state updates
             if (!processedInquiryIds.has(latestInquiry.id)) {
               console.log(`Processing new inquiry ${latestInquiry.id}`);
-              
+
               // Update both messages and processedInquiryIds atomically
               // First, create the new message
               const aiMessage = {
@@ -259,18 +302,18 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
                 updated: new Date(),
                 variables: {}
               };
-              
+
               // Update both states in one render cycle
               const newProcessedIds = new Set(processedInquiryIds);
               newProcessedIds.add(latestInquiry.id);
               setProcessedInquiryIds(newProcessedIds);
-              
+
               // Check if this message already exists in the messages array
-              const messageExists = messages.some(msg => 
-                msg.id === aiMessage.id || 
+              const messageExists = messages.some(msg =>
+                msg.id === aiMessage.id ||
                 (msg.sender === 'ai' && msg.message === aiMessage.message)
               );
-              
+
               if (!messageExists) {
                 console.log('Adding new AI inquiry to chat history:', aiMessage);
                 setMessages(prevMessages => [...prevMessages, aiMessage]);
