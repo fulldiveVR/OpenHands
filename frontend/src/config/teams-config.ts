@@ -1,7 +1,7 @@
 // Configuration for Wize Teams integration
 export const WIZE_TEAMS_CONFIG = {
   // Default team ID for specification builder
-  DEFAULT_TEAM_ID: "XHdfIWsaGF-DN55gSqnj7", // n5zC5Cj3qdbm9YmAnkt6T
+  DEFAULT_TEAM_ID: import.meta.env.VITE_TEAMS_DEFAULT_TEAM_ID,
 
   // Polling interval in milliseconds
   POLLING_INTERVAL: 5000,

@@ -13,6 +13,7 @@ import {
   FileWithUrl,
   IInquiry
 } from "./wize-teams.types";
+import WIZE_TEAMS_CONFIG from "#/config/teams-config";
 
 // Additional types not covered in wize-teams.types.ts
 
@@ -40,7 +41,7 @@ export const defaultPage = { skip: 0, limit: 30 };
 
 export class TeamsApiClient {
   private httpClient: AxiosInstance;
-  private readonly backendBaseUrl: string = import.meta.env.VITE_TEAMS_API_BASE_URL || "https://wize-teams-api.aiwayz.com";
+  private readonly backendBaseUrl: string = WIZE_TEAMS_CONFIG.API_BASE_URL;
 
   constructor() {
     this.httpClient = axios.create({
