@@ -26,6 +26,7 @@ import { useAutoLogin } from "#/hooks/use-auto-login";
 import { useAuthCallback } from "#/hooks/use-auth-callback";
 import { LOCAL_STORAGE_KEYS } from "#/utils/local-storage";
 import { useAuthCheck } from "#/hooks/use-auth-check";
+import { NonClosableAlert } from "#/components/features/auth/non-closable-alert";
 
 export function ErrorBoundary() {
   const error = useRouteError();
@@ -69,8 +70,8 @@ export default function MainApp() {
   const { migrateUserConsent } = useMigrateUserConsent();
   const { t } = useTranslation();
   
-  // Run authentication check
-  useAuthCheck();
+  // Run authentication check and get alert state
+  const { showAlert } = useAuthCheck();
 
   const config = useConfig();
   const {
@@ -198,10 +199,12 @@ export default function MainApp() {
     loginMethodExists;
 
   return (
-    <div
-      data-testid="root-layout"
-      className="bg-base p-3 h-screen md:min-w-[1024px] flex flex-col md:flex-row gap-3"
-    >
+    <>
+      {showAlert && <NonClosableAlert />}
+      <div
+        data-testid="root-layout"
+        className="bg-base p-3 h-screen md:min-w-[1024px] flex flex-col md:flex-row gap-3"
+      >
 
       <div
         id="root-outlet"
@@ -229,5 +232,6 @@ export default function MainApp() {
         config.data?.APP_MODE === "saas" &&
         settings?.IS_NEW_USER && <SetupPaymentModal />}
     </div>
+    </>
   );
 }

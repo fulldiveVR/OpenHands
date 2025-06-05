@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { displayErrorToast } from "#/utils/custom-toast-handlers";
+import { useEffect, useState } from "react";
 
 /**
  * Check if refresh token exists in cookies
@@ -12,9 +11,10 @@ const hasRefreshToken = (): boolean => {
 
 /**
  * Hook to check if user is authenticated by verifying refresh token in cookies
- * Shows error toast on localhost or redirects to auth URL on other environments
+ * Shows non-closable alert on localhost or redirects to auth URL on other environments
  */
 export const useAuthCheck = () => {
+  const [showAlert, setShowAlert] = useState(false);
   useEffect(() => {
     const checkAuth = () => {
       // Check if refresh token exists in cookies
@@ -26,8 +26,8 @@ export const useAuthCheck = () => {
                            window.location.hostname === "127.0.0.1";
 
         if (isLocalhost) {
-          // Show standard error toast for localhost
-          displayErrorToast("rf Authentication token is missing. Please sign in again.");
+          // Show non-closable alert for localhost
+          setShowAlert(true);
         } else {
           // Redirect to auth URL for non-localhost
           const authUrl = import.meta.env.VITE_AUTH_URL;
@@ -42,4 +42,6 @@ export const useAuthCheck = () => {
 
     checkAuth();
   }, []);
+
+  return { showAlert };
 };
