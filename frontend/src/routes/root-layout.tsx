@@ -25,6 +25,7 @@ import { useIsOnTosPage } from "#/hooks/use-is-on-tos-page";
 import { useAutoLogin } from "#/hooks/use-auto-login";
 import { useAuthCallback } from "#/hooks/use-auth-callback";
 import { LOCAL_STORAGE_KEYS } from "#/utils/local-storage";
+import { useAuthCheck } from "#/hooks/use-auth-check";
 
 export function ErrorBoundary() {
   const error = useRouteError();
@@ -67,6 +68,9 @@ export default function MainApp() {
   const { error } = useBalance();
   const { migrateUserConsent } = useMigrateUserConsent();
   const { t } = useTranslation();
+  
+  // Run authentication check
+  useAuthCheck();
 
   const config = useConfig();
   const {
