@@ -6,13 +6,15 @@ import { ul, ol } from "../markdown/list";
 import { anchor } from "../markdown/anchor";
 import { paragraph } from "../markdown/paragraph";
 
-// Component for displaying task results with collapsible content
-interface TaskResultMessageProps {
-  message: IMessageRecord;
+// Component for displaying collapsible content (used for both task results and final message)
+interface CollapsibleContentProps {
+  content: any;
   title: string;
+  timestamp?: Date | string;
+  className?: string;
 }
 
-const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title }) => {
+const CollapsibleContent: React.FC<CollapsibleContentProps> = ({ content, title, timestamp, className = "bg-green-900 bg-opacity-20" }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [shouldShowExpand, setShouldShowExpand] = useState(false);
@@ -26,16 +28,16 @@ const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title })
       const collapsedHeight = maxCollapsedLines * lineHeight;
       setShouldShowExpand(contentHeight > collapsedHeight);
     }
-  }, [message]);
+  }, [content]);
 
   // Format the result for display
-  const formatResult = () => {
-    if (!message.content) return null;
+  const formatContent = () => {
+    if (!content) return null;
     
-    if (typeof message.content === 'object') {
+    if (typeof content === 'object') {
       return (
         <div>
-          {Object.entries(message.content).map(([key, value]) => (
+          {Object.entries(content).map(([key, value]) => (
             <div key={key} className="mb-2">
               <div className="font-semibold">{key.replace(/_/g, ' ').toUpperCase()}:</div>
               {Array.isArray(value) ? (
@@ -86,21 +88,23 @@ const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title })
             p: paragraph,
           }}
         >
-          {typeof message.content === 'string' 
-            ? message.content 
-            : String(message.content)}
+          {typeof content === 'string' 
+            ? content 
+            : String(content)}
         </Markdown>
       );
     }
   };
 
   return (
-    <div className="flex flex-col p-3 rounded-md bg-green-900 bg-opacity-20">
+    <div className={`flex flex-col p-3 rounded-md ${className}`}>
       <div className="flex justify-between text-xs text-neutral-400 mb-1">
         <span>{title}</span>
-        {message.created && (
+        {timestamp && (
           <span className="text-xs opacity-70">
-            {new Date(message.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {typeof timestamp === 'string' 
+              ? timestamp 
+              : new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
       </div>
@@ -110,7 +114,7 @@ const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title })
         className={`text-sm overflow-hidden transition-all duration-300 ${!isExpanded && shouldShowExpand ? `max-h-[${maxCollapsedLines * lineHeight}px]` : ''}`}
         style={!isExpanded && shouldShowExpand ? { maxHeight: `${maxCollapsedLines * lineHeight}px` } : {}}
       >
-        {formatResult()}
+        {formatContent()}
       </div>
       
       {shouldShowExpand && (
@@ -122,6 +126,23 @@ const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title })
         </button>
       )}
     </div>
+  );
+};
+
+// Component for displaying task results with collapsible content
+interface TaskResultMessageProps {
+  message: IMessageRecord;
+  title: string;
+}
+
+const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title }) => {
+  return (
+    <CollapsibleContent
+      content={message.content}
+      title={title}
+      timestamp={message.created}
+      className="bg-green-900 bg-opacity-20"
+    />
   );
 };
 
@@ -274,76 +295,12 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
 
       {/* Display session results as a separate message if available */}
       {hasSessionResult && (
-        <div
-          className="flex flex-col p-3 rounded-md bg-green-900 bg-opacity-30 max-w-3/4"
-        >
-          <div className="flex justify-between text-xs text-neutral-400 mb-1">
-            <span>Results</span>
-            <span className="text-xs opacity-70">
-              {sessionResult.completedAt ? new Date(sessionResult.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
-
-          {/* Display results in formatted view */}
-          <div className="text-sm mb-3">
-            {sessionResult.result && typeof sessionResult.result === 'object' ? (
-              <div>
-                {Object.entries(sessionResult.result).map(([key, value]) => (
-                  <div key={key} className="mb-2">
-                    <div className="font-semibold">{key.replace(/_/g, ' ').toUpperCase()}:</div>
-                    {Array.isArray(value) ? (
-                      <ul className="list-disc pl-5">
-                        {value.map((item, index) => (
-                          <li key={index}>
-                            <Markdown
-                              components={{
-                                code,
-                                ul,
-                                ol,
-                                a: anchor,
-                                p: paragraph,
-                              }}
-                            >
-                              {String(item)}
-                            </Markdown>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div>
-                        <Markdown
-                          components={{
-                            code,
-                            ul,
-                            ol,
-                            a: anchor,
-                            p: paragraph,
-                          }}
-                        >
-                          {String(value)}
-                        </Markdown>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <Markdown
-                components={{
-                  code,
-                  ul,
-                  ol,
-                  a: anchor,
-                  p: paragraph,
-                }}
-              >
-                {typeof sessionResult.result === 'string' 
-                  ? sessionResult.result 
-                  : JSON.stringify(sessionResult.result || sessionResult, null, 2)}
-              </Markdown>
-            )}
-          </div>
-        </div>
+        <CollapsibleContent
+          content={sessionResult.result || sessionResult}
+          title="Final Results"
+          timestamp={sessionResult.completedAt ? new Date(sessionResult.completedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          className="bg-green-900 bg-opacity-30 max-w-3/4"
+        />
       )}
 
       {/* Send to Coder button as a separate element */}
