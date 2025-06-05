@@ -8,6 +8,11 @@ import { useIsCreatingConversation } from "#/hooks/use-is-creating-conversation"
 import { useUserConversations } from "#/hooks/query/use-user-conversations";
 import { useUserRepositories } from "#/hooks/query/use-user-repositories";
 import { GitRepository } from "#/types/git";
+import { useDeleteConversation } from "#/hooks/mutation/use-delete-conversation";
+import { ModalBackdrop } from "#/components/shared/modals/modal-backdrop";
+import { ModalBody } from "#/components/shared/modals/modal-body";
+import { BrandButton } from "#/components/features/settings/brand-button";
+import { I18nKey } from "#/i18n/declaration";
 
 <PrefetchPageLinks page="/conversations/:conversationId" />;
 
@@ -18,7 +23,10 @@ function HomeScreen() {
     string | null
   >(null);
   const [selectedRepository, setSelectedRepository] = React.useState<GitRepository | null>(null);
+  const [conversationToDelete, setConversationToDelete] = React.useState<string | null>(null);
   // Removed tabs state as we're only showing tasks
+
+  const { mutate: deleteConversation } = useDeleteConversation();
 
   const {
     mutate: createConversation,
@@ -195,24 +203,88 @@ function HomeScreen() {
             {!isFetching && !error && conversations?.map((conversation: any) => (
               <div
                 key={conversation.conversation_id}
-                onClick={() => window.location.href = `/conversations/${conversation.conversation_id}`}
-                className="flex items-center justify-between py-3 border-b border-neutral-700 hover:bg-neutral-800 cursor-pointer"
+                className="flex items-center justify-between py-3 border-b border-neutral-700 hover:bg-neutral-800"
               >
-                <div className="flex flex-col">
+                <div 
+                  className="flex flex-col flex-grow cursor-pointer"
+                  onClick={() => window.location.href = `/conversations/${conversation.conversation_id}`}
+                >
                   <span className="text-sm font-medium">{conversation.title}</span>
                   <span className="text-xs text-neutral-400">
                     {formatDate(conversation.created_at)}
                     {conversation.selected_repository && ` · ${conversation.selected_repository}`}
                   </span>
                 </div>
-                <div className={`text-xs ${conversation.status === 'STOPPED' ? 'text-blue-500' : 'text-green-500'}`}>
-                  {conversation.status === 'STOPPED' ? 'Complete' : conversation.status === 'RUNNING' ? 'Running' : 'Starting'}
+                <div className="flex items-center gap-3">
+                  <div className={`text-xs ${conversation.status === 'STOPPED' ? 'text-blue-500' : 'text-green-500'}`}>
+                    {conversation.status === 'STOPPED' ? 'Complete' : conversation.status === 'RUNNING' ? 'Running' : 'Starting'}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConversationToDelete(conversation.conversation_id);
+                    }}
+                    className="text-xs text-neutral-500 hover:text-neutral-400 p-1"
+                    aria-label="Delete conversation"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Confirm Delete Modal */}
+      {conversationToDelete && (
+        <ModalBackdrop>
+          <ModalBody className="items-start border border-tertiary">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-medium">{t("Delete Conversation")}</h3>
+              <p className="text-sm text-neutral-400">
+                {t("Are you sure you want to delete this conversation? This action cannot be undone.")}
+              </p>
+            </div>
+            <div
+              className="flex flex-col gap-2 w-full mt-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <BrandButton
+                type="button"
+                variant="primary"
+                onClick={() => {
+                  deleteConversation(
+                    { conversationId: conversationToDelete },
+                    {
+                      onSuccess: () => {
+                        setConversationToDelete(null);
+                      },
+                    }
+                  );
+                }}
+                className="w-full"
+                data-testid="confirm-button"
+              >
+                {t("Confirm")}
+              </BrandButton>
+              <BrandButton
+                type="button"
+                variant="secondary"
+                onClick={() => setConversationToDelete(null)}
+                className="w-full"
+                data-testid="cancel-button"
+              >
+                {t("Cancel")}
+              </BrandButton>
+            </div>
+          </ModalBody>
+        </ModalBackdrop>
+      )}
     </div>
   );
 }
