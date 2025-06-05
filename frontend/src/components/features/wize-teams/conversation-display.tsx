@@ -1,10 +1,129 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IMessageRecord } from '../../../api/wize-teams.types';
 import Markdown from "react-markdown";
 import { code } from "../markdown/code";
 import { ul, ol } from "../markdown/list";
 import { anchor } from "../markdown/anchor";
 import { paragraph } from "../markdown/paragraph";
+
+// Component for displaying task results with collapsible content
+interface TaskResultMessageProps {
+  message: IMessageRecord;
+  title: string;
+}
+
+const TaskResultMessage: React.FC<TaskResultMessageProps> = ({ message, title }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [shouldShowExpand, setShouldShowExpand] = useState(false);
+  const maxCollapsedLines = 5;
+  const lineHeight = 20; // Approximate line height in pixels
+
+  useEffect(() => {
+    // Check if content height exceeds the collapsed height
+    if (contentRef.current) {
+      const contentHeight = contentRef.current.scrollHeight;
+      const collapsedHeight = maxCollapsedLines * lineHeight;
+      setShouldShowExpand(contentHeight > collapsedHeight);
+    }
+  }, [message]);
+
+  // Format the result for display
+  const formatResult = () => {
+    if (!message.content) return null;
+    
+    if (typeof message.content === 'object') {
+      return (
+        <div>
+          {Object.entries(message.content).map(([key, value]) => (
+            <div key={key} className="mb-2">
+              <div className="font-semibold">{key.replace(/_/g, ' ').toUpperCase()}:</div>
+              {Array.isArray(value) ? (
+                <ul className="list-disc pl-5">
+                  {value.map((item, index) => (
+                    <li key={index}>
+                      <Markdown
+                        components={{
+                          code,
+                          ul,
+                          ol,
+                          a: anchor,
+                          p: paragraph,
+                        }}
+                      >
+                        {String(item)}
+                      </Markdown>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div>
+                  <Markdown
+                    components={{
+                      code,
+                      ul,
+                      ol,
+                      a: anchor,
+                      p: paragraph,
+                    }}
+                  >
+                    {String(value)}
+                  </Markdown>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    } else {
+      return (
+        <Markdown
+          components={{
+            code,
+            ul,
+            ol,
+            a: anchor,
+            p: paragraph,
+          }}
+        >
+          {typeof message.content === 'string' 
+            ? message.content 
+            : String(message.content)}
+        </Markdown>
+      );
+    }
+  };
+
+  return (
+    <div className="flex flex-col p-3 rounded-md bg-green-900 bg-opacity-20">
+      <div className="flex justify-between text-xs text-neutral-400 mb-1">
+        <span>{title}</span>
+        {message.created && (
+          <span className="text-xs opacity-70">
+            {new Date(message.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
+      </div>
+      
+      <div 
+        ref={contentRef}
+        className={`text-sm overflow-hidden transition-all duration-300 ${!isExpanded && shouldShowExpand ? `max-h-[${maxCollapsedLines * lineHeight}px]` : ''}`}
+        style={!isExpanded && shouldShowExpand ? { maxHeight: `${maxCollapsedLines * lineHeight}px` } : {}}
+      >
+        {formatResult()}
+      </div>
+      
+      {shouldShowExpand && (
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)} 
+          className="text-xs text-blue-400 hover:text-blue-300 mt-2 self-end"
+        >
+          {isExpanded ? 'Show less' : 'Show more'}
+        </button>
+      )}
+    </div>
+  );
+};
 
 interface ConversationDisplayProps {
   messages: IMessageRecord[];
@@ -88,48 +207,70 @@ export const ConversationDisplay: React.FC<ConversationDisplayProps> = ({ messag
   return (
     <div className="flex flex-col space-y-4 mt-4">
       {/* Display regular messages */}
-      {displayMessages.map((message, index) => (
-        <div
-          key={message.id || index}
-          className={`flex flex-col p-3 rounded-md ${
-            message.sender === 'user'
-              ? 'bg-blue-900 bg-opacity-20 ml-auto'
-              : isFinalSpecification(message, index)
-                ? 'bg-green-900 bg-opacity-30'
-                : 'bg-neutral-800'
-          } ${
-            message.sender === 'user' ? 'max-w-3/4 ml-auto' : 'max-w-3/4'
-          }`}
-        >
-          <div className="flex justify-between text-xs text-neutral-400 mb-1">
-            <span>
-              {message.sender === 'user'
-                ? 'You'
-                : isFinalSpecification(message, index)
-                  ? 'Final Specification'
-                  : message.agentId || 'AI Team'}
-            </span>
-            {message.created && (
-              <span className="text-xs opacity-70">
-                {new Date(message.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      {displayMessages.map((message, index) => {
+        // Special handling for task result messages
+        if (message.type === 'task-result') {
+          // Extract task title from the message
+          const titleMatch = message.message.match(/^Task completed: (.+?)\n/); 
+          const title = titleMatch ? `Task completed: ${titleMatch[1]}` : 'Task completed';
+          
+          return (
+            <TaskResultMessage 
+              key={message.id || index}
+              message={message}
+              title={title}
+            />
+          );
+        }
+        
+        // Regular message display
+        return (
+          <div
+            key={message.id || index}
+            className={`flex flex-col p-3 rounded-md ${
+              message.sender === 'user'
+                ? 'bg-blue-900 bg-opacity-20 ml-auto'
+                : message.type === 'notification'
+                  ? 'bg-blue-900 bg-opacity-10'
+                  : isFinalSpecification(message, index)
+                    ? 'bg-green-900 bg-opacity-30'
+                    : 'bg-neutral-800'
+            } ${
+              message.sender === 'user' ? 'max-w-3/4 ml-auto' : 'max-w-3/4'
+            }`}
+          >
+            <div className="flex justify-between text-xs text-neutral-400 mb-1">
+              <span>
+                {message.sender === 'user'
+                  ? 'You'
+                  : message.sender === 'system'
+                    ? 'System'
+                    : isFinalSpecification(message, index)
+                      ? 'Final Specification'
+                      : message.agentId || 'AI Team'}
               </span>
-            )}
+              {message.created && (
+                <span className="text-xs opacity-70">
+                  {new Date(message.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              )}
+            </div>
+            <div className="text-sm">
+              <Markdown
+                components={{
+                  code,
+                  ul,
+                  ol,
+                  a: anchor,
+                  p: paragraph,
+                }}
+              >
+                {message.message || message.content}
+              </Markdown>
+            </div>
           </div>
-          <div className="text-sm">
-            <Markdown
-              components={{
-                code,
-                ul,
-                ol,
-                a: anchor,
-                p: paragraph,
-              }}
-            >
-              {message.message || message.content}
-            </Markdown>
-          </div>
-        </div>
-      ))}
+        );
+      })}
 
       {/* Display session results as a separate message if available */}
       {hasSessionResult && (

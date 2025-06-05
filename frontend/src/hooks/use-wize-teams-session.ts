@@ -138,7 +138,7 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
       // Update the tasks
       const newTasks = teamSession.backlog || [];
       
-      // Check for tasks that changed status to in_progress
+      // Check for tasks that changed status to in_progress or done
       const previousTasks = previousTasksRef.current;
       newTasks.forEach(newTask => {
         // Find the corresponding task in the previous state
@@ -164,6 +164,45 @@ export const useWizeTeamsSession = ({ teamId }: UseWizeTeamsSessionProps): UseWi
           
           // Add the message to the chat
           setMessages(prevMessages => [...prevMessages, taskStartedMessage]);
+        }
+        
+        // If task status changed to done (completed), add a message to the chat with the task result
+        if (newTask.status === TaskStatus.Done && 
+            (!prevTask || prevTask.status !== TaskStatus.Done)) {
+          // Format the task result for display
+          let formattedResult = '';
+          
+          // Check if the task has a result
+          if (newTask.result) {
+            if (typeof newTask.result === 'object') {
+              // Format object result as JSON
+              formattedResult = JSON.stringify(newTask.result, null, 2);
+            } else {
+              // Use result as is if it's a string or convert to string otherwise
+              formattedResult = String(newTask.result);
+            }
+          } else {
+            formattedResult = 'No detailed result available';
+          }
+          
+          // Create a message that conforms to IMessageRecord type
+          const taskCompletedMessage: IMessageRecord = {
+            id: `task-${newTask.id}-completed-${Date.now()}`,
+            userId: teamSession.userId || '',
+            sessionId: sid,
+            sender: 'system',
+            message: `Task completed: ${newTask.title}\n\n${formattedResult}`,
+            agentId: '',  // Empty string as it's a system message
+            finishReason: '',
+            created: new Date(),
+            updated: new Date(),
+            variables: {},
+            type: 'task-result', // Special type for task results to enable formatting
+            content: newTask.result // Store the original result for rendering
+          };
+          
+          // Add the message to the chat
+          setMessages(prevMessages => [...prevMessages, taskCompletedMessage]);
         }
       });
       
