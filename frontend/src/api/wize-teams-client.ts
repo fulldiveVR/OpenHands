@@ -79,9 +79,25 @@ export const wizeTeamsService = {
   },
 
   // Get session messages - API call removed as requested
-  getSessionMessages: async (sessionId: string): Promise<any[]> => {
-    console.log('Session messages API call has been removed as requested');
-    return []; // Return empty array instead of making the API call
+  getSessionMessages: async (sessionId: string): Promise<{ messages: IMessageRecord[]; totalCount: number }> => {
+    try {
+      const { messages, totalCount } = await teamsApiClient.getSessionMessages(sessionId, 'user');
+      return { messages, totalCount };
+    } catch (error) {
+      console.error('Error getting session messages:', error);
+      return { messages: [], totalCount: 0 };
+    }
+  },
+  
+  // Get debug messages for a session
+  getSessionDebugMessages: async (sessionId: string): Promise<{ messages: IMessageRecord[]; totalCount: number }> => {
+    try {
+      const { messages, totalCount } = await teamsApiClient.getSessionDebugMessages(sessionId);
+      return { messages, totalCount };
+    } catch (error) {
+      console.error('Error getting session debug messages:', error);
+      return { messages: [], totalCount: 0 };
+    }
   },
 
   // Get inquiries for a session

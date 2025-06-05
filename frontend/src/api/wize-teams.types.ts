@@ -2,6 +2,7 @@ export enum TaskStatus {
   Pending = "pending",
   Failed = "failed",
   Done = "done",
+  InProgress = "in_progress",
   AwaitingUserInput = "awaiting_user_input"
 }
 

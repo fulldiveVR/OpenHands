@@ -2,6 +2,7 @@ import type { AxiosInstance } from "axios";
 import axios from "axios";
 // @ts-ignore
 import { getSessionToken } from "./session-token";
+import { displayErrorToast } from "../utils/custom-toast-handlers";
 import {
   ITeam,
   ITeamSession,
@@ -12,6 +13,7 @@ import {
   FileWithUrl,
   IInquiry
 } from "./wize-teams.types";
+import WIZE_TEAMS_CONFIG from "#/config/teams-config";
 
 // Additional types not covered in wize-teams.types.ts
 
@@ -39,7 +41,7 @@ export const defaultPage = { skip: 0, limit: 30 };
 
 export class TeamsApiClient {
   private httpClient: AxiosInstance;
-  private readonly backendBaseUrl: string = import.meta.env.VITE_TEAMS_API_BASE_URL || "https://wize-teams-api.aiwayz.com";
+  private readonly backendBaseUrl: string = WIZE_TEAMS_CONFIG.API_BASE_URL;
 
   constructor() {
     this.httpClient = axios.create({
@@ -50,6 +52,7 @@ export class TeamsApiClient {
   private setToken(): void {
     const session_token = getSessionToken();
     if (!session_token) {
+      displayErrorToast("rf Authentication token is missing. Please sign in again.");
       throw "no token error";
     }
 
@@ -122,6 +125,29 @@ export class TeamsApiClient {
     const { data, headers } = await this.httpClient.get(`/sessions/${sessionId}/messages`, {
       params: {
         userId,
+        skip,
+        limit,
+      },
+    });
+    return { messages: data, totalCount: Number.parseInt(headers["x-total-count"]) };
+  }
+
+  /**
+   * Get debug messages for a session
+   * @param sessionId The ID of the session
+   * @param skip Number of messages to skip
+   * @param limit Maximum number of messages to return
+   * @returns Object containing debug messages and total count
+   */
+  public async getSessionDebugMessages(
+    sessionId: string,
+    skip = 0,
+    limit = 500,
+  ): Promise<{ messages: IMessageRecord[]; totalCount: number }> {
+    this.setToken();
+
+    const { data, headers } = await this.httpClient.get(`/sessions/${sessionId}/messages/debug`, {
+      params: {
         skip,
         limit,
       },

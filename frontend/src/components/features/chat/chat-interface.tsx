@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import React from "react";
 import posthog from "posthog-js";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { I18nKey } from "#/i18n/declaration";
 import { convertImageToBase64 } from "#/utils/convert-image-to-base-64";
@@ -28,6 +28,10 @@ import { useOptimisticUserMessage } from "#/hooks/use-optimistic-user-message";
 import { useWSErrorMessage } from "#/hooks/use-ws-error-message";
 import { ErrorMessageBanner } from "./error-message-banner";
 import { shouldRenderEvent } from "./event-content-helpers/should-render-event";
+import { Controls } from "../controls/controls";
+import { useDisclosure } from "@heroui/react";
+import { useSettings } from "#/hooks/query/use-settings";
+import { useActiveConversation } from "#/hooks/query/use-active-conversation";
 
 function getEntryPoint(
   hasRepository: boolean | null,
@@ -36,6 +40,36 @@ function getEntryPoint(
   if (hasRepository) return "github";
   if (hasReplayJson) return "replay";
   return "direct";
+}
+
+interface ChatHeaderProps {
+  title?: string;
+  onExportTrajectory: () => void;
+}
+
+function ChatHeader({ title, onExportTrajectory }: ChatHeaderProps) {
+  const navigate = useNavigate();
+
+  return (
+    <div className="flex items-center justify-between px-2 py-[6px] border-b border-neutral-700">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => navigate('/')}
+          className="p-[4px] rounded-full hover:bg-neutral-700 transition-colors"
+          title="Back to home"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+        {title && <h2 className="text-sm font-medium">{title}</h2>}
+      </div>
+
+      <TrajectoryActions
+        onExportTrajectory={() => onExportTrajectory()}
+      />
+    </div>
+  );
 }
 
 export function ChatInterface() {
@@ -47,6 +81,9 @@ export function ChatInterface() {
   const scrollRef = React.useRef<HTMLDivElement>(null);
   const { scrollDomToBottom, onChatBodyScroll, hitBottom } =
     useScrollToBottom(scrollRef);
+
+  const { data: conversation } = useActiveConversation();
+  const { data: settings } = useSettings();
 
   const { curAgentState } = useSelector((state: RootState) => state.agent);
 
@@ -65,6 +102,12 @@ export function ChatInterface() {
   const errorMessage = getErrorMessage();
 
   const events = parsedEvents.filter(shouldRenderEvent);
+
+  const {
+      isOpen: securityModalIsOpen,
+      onOpen: onSecurityModalOpen,
+      onOpenChange: onSecurityModalOpenChange,
+    } = useDisclosure();
 
   const handleSendMessage = async (content: string, files: File[]) => {
     if (events.length === 0) {
@@ -141,6 +184,9 @@ export function ChatInterface() {
 
   return (
     <div className="h-full flex flex-col justify-between">
+      <ChatHeader
+        title={conversation?.title}
+        onExportTrajectory={onClickExportTrajectoryButton} />
       {events.length === 0 && !optimisticUserMessage && (
         <ChatSuggestions onSuggestionsClick={setMessageToSend} />
       )}
@@ -176,15 +222,7 @@ export function ChatInterface() {
 
       <div className="flex flex-col gap-[6px] px-4 pb-4">
         <div className="flex justify-between relative">
-          <TrajectoryActions
-            onPositiveFeedback={() =>
-              onClickShareFeedbackActionButton("positive")
-            }
-            onNegativeFeedback={() =>
-              onClickShareFeedbackActionButton("negative")
-            }
-            onExportTrajectory={() => onClickExportTrajectoryButton()}
-          />
+          <div className="flex gap-1 h-[25px]"></div>
 
           <div className="absolute left-1/2 transform -translate-x-1/2 bottom-0">
             {curAgentState === AgentState.RUNNING && <TypingIndicator />}
@@ -205,6 +243,10 @@ export function ChatInterface() {
           mode={curAgentState === AgentState.RUNNING ? "stop" : "submit"}
           value={messageToSend ?? undefined}
           onChange={setMessageToSend}
+        />
+        <Controls
+          setSecurityOpen={onSecurityModalOpen}
+          showSecurityLock={!!settings?.SECURITY_ANALYZER}
         />
       </div>
 

@@ -26,7 +26,7 @@ export function RepoConnector({ onRepoSelection }: RepoConnectorProps) {
   const isGitHubTokenSet = providers.includes("github");
   const isSaaS = config?.APP_MODE === "saas";
   const providersAreSet = providers.length > 0;
-  
+
   const handleGitHubTokenChange = (value: string) => {
     setGithubToken(value);
     if (value) {
@@ -38,7 +38,7 @@ export function RepoConnector({ onRepoSelection }: RepoConnectorProps) {
       });
     }
   };
-  
+
   const handleStartWithRepo = () => {
     // If a repository is selected, pass it to the parent component
     if (providers.length > 0) {

@@ -29,9 +29,9 @@ export function Container({
       )}
     >
       {labels && (
-        <div className="flex text-xs h-[36px]">
+        <div className="flex text-xs h-[40px]">
           {labels.map(
-            ({ label: l, to, icon, isBeta, isLoading, rightContent }) => (
+            ({ label: l, to, icon, isLoading, rightContent }) => (
               <NavTab
                 key={to}
                 to={to}

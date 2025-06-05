@@ -105,6 +105,7 @@ const openHandsHandlers = [
       "gpt-3.5-turbo",
       "gpt-4o",
       "gpt-4o-mini",
+      "gpt-4.1",
       "anthropic/claude-3.5",
       "anthropic/claude-sonnet-4-20250514",
     ]),

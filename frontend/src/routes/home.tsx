@@ -1,23 +1,18 @@
 import React from "react";
 import { PrefetchPageLinks, useNavigate } from "react-router";
 import { HomeHeader } from "#/components/features/home/home-header";
-import { RepoConnector } from "#/components/features/home/repo-connector";
-import { TaskSuggestions } from "#/components/features/home/tasks/task-suggestions";
 import { useUserProviders } from "#/hooks/use-user-providers";
-import { BrandButton } from "#/components/features/settings/brand-button";
 import { useTranslation } from "react-i18next";
 import { useCreateConversation } from "#/hooks/mutation/use-create-conversation";
 import { useIsCreatingConversation } from "#/hooks/use-is-creating-conversation";
-import { ConversationPanel } from "#/components/features/conversation-panel/conversation-panel";
 import { useUserConversations } from "#/hooks/query/use-user-conversations";
-import { ProjectStatus } from "#/components/features/conversation-panel/conversation-state-indicator";
 import { useUserRepositories } from "#/hooks/query/use-user-repositories";
 import { GitRepository } from "#/types/git";
-import { useWizeTeamsSession } from "#/hooks/use-wize-teams-session";
-import { TaskList } from "#/components/features/wize-teams/task-list";
-import { RunStatus } from "#/api/wize-teams.types";
-import ConversationDisplay from "#/components/features/wize-teams/conversation-display";
-import { WIZE_TEAMS_CONFIG } from "#/config/teams-config";
+import { useDeleteConversation } from "#/hooks/mutation/use-delete-conversation";
+import { ModalBackdrop } from "#/components/shared/modals/modal-backdrop";
+import { ModalBody } from "#/components/shared/modals/modal-body";
+import { BrandButton } from "#/components/features/settings/brand-button";
+import { I18nKey } from "#/i18n/declaration";
 
 <PrefetchPageLinks page="/conversations/:conversationId" />;
 
@@ -28,7 +23,10 @@ function HomeScreen() {
     string | null
   >(null);
   const [selectedRepository, setSelectedRepository] = React.useState<GitRepository | null>(null);
+  const [conversationToDelete, setConversationToDelete] = React.useState<string | null>(null);
   // Removed tabs state as we're only showing tasks
+
+  const { mutate: deleteConversation } = useDeleteConversation();
 
   const {
     mutate: createConversation,
@@ -37,39 +35,21 @@ function HomeScreen() {
   } = useCreateConversation();
   const isCreatingConversationElsewhere = useIsCreatingConversation();
   const { data: conversations, isFetching, error } = useUserConversations();
-  const { data: repositories, isLoading: isLoadingRepositories } = useUserRepositories();
 
-  // Wize Teams integration
+  // Check if GitHub token is set
+  const hasGithubToken = providers.includes("github");
+
+  // Only fetch repositories if GitHub token is available
   const {
-    startSession,
-    sessionId,
-    tasks,
-    messages,
-    isLoading: isLoadingWizeTeams,
-    isCompleted,
-    error: wizeTeamsError
-  } = useWizeTeamsSession({ teamId: WIZE_TEAMS_CONFIG.DEFAULT_TEAM_ID });
+    data: repositories,
+    isLoading: isLoadingRepositories
+  } = useUserRepositories(hasGithubToken);
 
-  // Show notification when session is completed
-  React.useEffect(() => {
-    if (isCompleted && sessionId) {
-      // You can implement a toast notification here if needed
-      console.log('Session completed:', sessionId);
-    }
-  }, [isCompleted, sessionId]);
 
   // We check for isSuccess because the app might require time to render
   // into the new conversation screen after the conversation is created.
   const isCreatingConversation =
     isPending || isSuccess || isCreatingConversationElsewhere;
-
-  console.log('Debug - isCreatingConversation:', isCreatingConversation, {
-    isPending,
-    isSuccess,
-    isCreatingConversationElsewhere
-  });
-
-  const providersAreSet = providers.length > 0;
 
   const [inputValue, setInputValue] = React.useState("");
 
@@ -97,7 +77,7 @@ function HomeScreen() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() && !isLoadingWizeTeams) {
+    if (inputValue.trim()) {
       // Navigate to the specification builder screen with the query and repository ID
       navigate('/specification-builder', {
         state: {
@@ -142,20 +122,32 @@ function HomeScreen() {
               className="w-full h-32 p-4 bg-base-primary border border-neutral-700 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <div className="absolute bottom-4 left-4 flex items-center gap-2">
-              <span className="text-sm text-neutral-400">{t("Repository")}:</span>
-              <select
-                value={selectedRepository?.id.toString() || ""}
-                onChange={(e) => handleRepoSelection(e.target.value || null)}
-                className="px-2 py-1 text-sm bg-base-primary border border-neutral-700 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
-                disabled={!providersAreSet || isLoadingRepositories}
-              >
-                <option value="">{t("None")}</option>
-                {repositories?.map((repo: GitRepository) => (
-                  <option key={repo.id} value={repo.id.toString()}>
-                    {repo.full_name}
-                  </option>
-                ))}
-              </select>
+              {hasGithubToken ? (
+                <>
+                  <span className="text-sm text-neutral-400">{t("Repository")}:</span>
+                  <select
+                    value={selectedRepository?.id.toString() || ""}
+                    onChange={(e) => handleRepoSelection(e.target.value || null)}
+                    className="px-2 py-1 text-sm bg-base-primary border border-neutral-700 rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                    disabled={isLoadingRepositories}
+                  >
+                    <option value="">{t("Not selected")}</option>
+                    {repositories?.map((repo: GitRepository) => (
+                      <option key={repo.id} value={repo.id.toString()}>
+                        {repo.full_name}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/settings/git')}
+                  className="px-3 py-1 text-sm bg-neutral-500 text-white rounded-md hover:bg-neutral-400"
+                >
+                  Setup repository
+                </button>
+              )}
             </div>
             <div className="absolute bottom-4 right-4 flex gap-2">
               <button
@@ -171,13 +163,10 @@ function HomeScreen() {
               </button>
               <button
                 type="submit"
-                disabled={isLoadingWizeTeams || !inputValue.trim()}
+                disabled={!inputValue.trim()}
                 className="px-3 py-1 text-sm bg-primary text-white rounded-md hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
               >
-                {isLoadingWizeTeams && (
-                  <span className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></span>
-                )}
-                {isLoadingWizeTeams ? t("Processing...") : "Build Spec"}
+                {"Build Spec"}
               </button>
             </div>
           </div>
@@ -191,68 +180,6 @@ function HomeScreen() {
           </div>
 
           <div className="space-y-1">
-            {/* Wize Teams Session Content */}
-            {sessionId && (
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Specification Builder</h2>
-                  <div className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${getStatusStyles(isCompleted, tasks)}`}>
-                    {!isCompleted && (
-                      <span className="animate-pulse h-2 w-2 bg-green-300 rounded-full"></span>
-                    )}
-                    {getStatusText(isCompleted, tasks)}
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  {/* Left side - Chat */}
-                  <div className="flex-1 bg-base-primary border border-neutral-700 rounded-md p-4">
-                    <h3 className="text-md font-medium mb-2">Conversation</h3>
-                    <div className="h-96 overflow-y-auto mb-4">
-                      <ConversationDisplay
-                        messages={messages}
-                        isLoading={isLoadingWizeTeams}
-                      />
-                    </div>
-
-                    {isCompleted && (
-                      <div className="mt-4 flex justify-center">
-                        <button
-                          onClick={() => {
-                            // Get the final specification from the team session
-                            const finalMessage = messages.length > 0 ? messages[messages.length - 1] : null;
-
-                            if (finalMessage) {
-                              const specification = finalMessage.message || finalMessage.content || "";
-
-                              // Create a conversation with the specification
-                              createConversation({
-                                q: `Generated specification:\n\n${specification}`,
-                                selectedRepository: selectedRepository
-                              });
-                            }
-                          }}
-                          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
-                        >
-                          Send
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Right side - Tasks */}
-                  <div className="w-1/3 bg-base-primary border border-neutral-700 rounded-md p-4">
-                    <h3 className="text-md font-medium mb-2">Tasks</h3>
-                    <div className="h-96 overflow-y-auto">
-                      <TaskList
-                        tasks={tasks}
-                        isLoading={isLoadingWizeTeams}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Regular conversations section */}
             {isFetching && (
@@ -276,24 +203,88 @@ function HomeScreen() {
             {!isFetching && !error && conversations?.map((conversation: any) => (
               <div
                 key={conversation.conversation_id}
-                onClick={() => window.location.href = `/conversations/${conversation.conversation_id}`}
-                className="flex items-center justify-between py-3 border-b border-neutral-700 hover:bg-neutral-800 cursor-pointer"
+                className="flex items-center justify-between py-3 border-b border-neutral-700 hover:bg-neutral-800"
               >
-                <div className="flex flex-col">
+                <div 
+                  className="flex flex-col flex-grow cursor-pointer"
+                  onClick={() => window.location.href = `/conversations/${conversation.conversation_id}`}
+                >
                   <span className="text-sm font-medium">{conversation.title}</span>
                   <span className="text-xs text-neutral-400">
                     {formatDate(conversation.created_at)}
                     {conversation.selected_repository && ` · ${conversation.selected_repository}`}
                   </span>
                 </div>
-                <div className={`text-xs ${conversation.status === 'STOPPED' ? 'text-blue-500' : 'text-green-500'}`}>
-                  {conversation.status === 'STOPPED' ? 'Complete' : conversation.status === 'RUNNING' ? 'Running' : 'Starting'}
+                <div className="flex items-center gap-3">
+                  <div className={`text-xs ${conversation.status === 'STOPPED' ? 'text-blue-500' : 'text-green-500'}`}>
+                    {conversation.status === 'STOPPED' ? 'Complete' : conversation.status === 'RUNNING' ? 'Running' : 'Starting'}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConversationToDelete(conversation.conversation_id);
+                    }}
+                    className="text-xs text-neutral-500 hover:text-neutral-400 p-1"
+                    aria-label="Delete conversation"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18"></path>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Confirm Delete Modal */}
+      {conversationToDelete && (
+        <ModalBackdrop>
+          <ModalBody className="items-start border border-tertiary">
+            <div className="flex flex-col gap-2">
+              <h3 className="text-lg font-medium">{t("Delete Conversation")}</h3>
+              <p className="text-sm text-neutral-400">
+                {t("Are you sure you want to delete this conversation? This action cannot be undone.")}
+              </p>
+            </div>
+            <div
+              className="flex flex-col gap-2 w-full mt-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <BrandButton
+                type="button"
+                variant="primary"
+                onClick={() => {
+                  deleteConversation(
+                    { conversationId: conversationToDelete },
+                    {
+                      onSuccess: () => {
+                        setConversationToDelete(null);
+                      },
+                    }
+                  );
+                }}
+                className="w-full"
+                data-testid="confirm-button"
+              >
+                {t("Confirm")}
+              </BrandButton>
+              <BrandButton
+                type="button"
+                variant="secondary"
+                onClick={() => setConversationToDelete(null)}
+                className="w-full"
+                data-testid="cancel-button"
+              >
+                {t("Cancel")}
+              </BrandButton>
+            </div>
+          </ModalBody>
+        </ModalBackdrop>
+      )}
     </div>
   );
 }

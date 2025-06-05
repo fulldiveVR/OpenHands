@@ -83,9 +83,11 @@ export const TaskList: React.FC<TaskListProps> = ({ tasks, isLoading }) => {
 const getStatusColor = (status: TaskStatus): string => {
   switch (status) {
     case TaskStatus.Done:
-      return 'text-blue-500';
-    case TaskStatus.Pending:
       return 'text-green-500';
+    case TaskStatus.Pending:
+      return 'text-neutral-400';
+    case TaskStatus.InProgress:
+      return 'text-blue-500';
     case TaskStatus.Failed:
       return 'text-red-500';
     default:
@@ -96,9 +98,11 @@ const getStatusColor = (status: TaskStatus): string => {
 const getStatusIndicatorColor = (status: TaskStatus): string => {
   switch (status) {
     case TaskStatus.Done:
-      return 'bg-blue-500';
-    case TaskStatus.Pending:
       return 'bg-green-500';
+    case TaskStatus.Pending:
+      return 'bg-neutral-400';
+    case TaskStatus.InProgress:
+      return 'bg-blue-500';
     case TaskStatus.Failed:
       return 'bg-red-500';
     default:
@@ -111,24 +115,13 @@ const getStatusText = (status: TaskStatus): string => {
     case TaskStatus.Done:
       return 'Complete';
     case TaskStatus.Pending:
+      return 'Pending';
+    case TaskStatus.InProgress:
       return 'In Progress';
     case TaskStatus.Failed:
       return 'Failed';
     default:
       return status;
-  }
-};
-
-const getPriorityColor = (priority: TaskPriority): string => {
-  switch (priority) {
-    case TaskPriority.High:
-      return 'bg-red-900 text-red-300';
-    case TaskPriority.Medium:
-      return 'bg-yellow-900 text-yellow-300';
-    case TaskPriority.Low:
-      return 'bg-blue-900 text-blue-300';
-    default:
-      return 'bg-neutral-800 text-neutral-300';
   }
 };
 

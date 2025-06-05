@@ -85,11 +85,6 @@ function SpecificationBuilderScreen() {
   const handleSendToCoder = () => {
     if (!isCompleted || !sessionId) return;
 
-    console.log('Send to coder button clicked');
-    console.log('Session completed:', isCompleted);
-    console.log('Selected repository:', selectedRepository);
-    console.log('Session result:', sessionResult);
-
     // First try to get specification from sessionResult if available
     if (sessionResult && sessionResult.result) {
       console.log('Using session result for specification');
@@ -198,12 +193,13 @@ function SpecificationBuilderScreen() {
           <h1 className="text-2xl font-semibold">Specification Builder</h1>
         </div>
         <div className={`text-xs px-2 py-1 rounded flex items-center gap-1 ${
-          isCompleted ? 'bg-blue-900 text-blue-300' : 'bg-green-900 text-green-300'
+          isCompleted && !wizeTeamsError ? 'bg-green-900 text-green-300' :
+          wizeTeamsError ? 'bg-red-900 text-red-300' : 'bg-blue-900 text-blue-300'
         }`}>
-          {!isCompleted && (
-            <span className="animate-pulse h-2 w-2 bg-green-300 rounded-full"></span>
+          {!isCompleted && !wizeTeamsError && (
+            <span className="animate-pulse h-2 w-2 bg-blue-300 rounded-full"></span>
           )}
-          {isCompleted ? 'Completed' : 'In Progress'}
+          {wizeTeamsError ? 'Error' : isCompleted ? 'Completed' : 'In Progress'}
         </div>
       </div>
 
